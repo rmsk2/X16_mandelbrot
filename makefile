@@ -5,7 +5,7 @@ all: mandelbr.prg
 
 ifdef MAC
 ACME=../acme/acme
-WORKDIR=/Users/martin/data/x16_test
+WORKDIR=/Users/martin/data/X16_mandel
 else
 ACME=acme
 WORKDIR=.
