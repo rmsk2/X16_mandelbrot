@@ -4,17 +4,19 @@ makes use of commander X16 features like:
 - More RAM which offers the possibility to precalculate more stuff
 - More free zero page addresses which allow a broader use of more efficient addressing modes
 - More colours to use in Hires mode (256 for the X16, 2 for the C64)
-- New instructions for the 65C02 (well only stz and bra)
+- New instructions for the 65C02 (well only `stz` and `bra`)
 
 **This is work in progress**. Currently the default section of the Mandelbrot set using the full resolution 
 of 320x240 at a depth of 24 steps is calculated in roughly 14 minutes. The C64 version takes two and a
 halve hours to calculate the same visualisation in a resolution of 320x200. Of course the biggest
 part of the speedup stems from the fact that the 65C02 in the X16 runs at 8MHz where the 6510 in a
-C64 is clocked at 1MHz. But even when that is taken into account the X16 version is currently about
+C64 is clocked at 1MHz. But even if that is taken into account the X16 version is currently about
 25% faster.
 
 You need the ACME macro assembler to assemble the program. Use the `LOAD "FILENAME"` command followed
-by `RUN` to start the program.
+by `RUN` to start the program. Under MacOS you have to set the variable `MAC` (use `make MAC=1`) when 
+calling the makefile and you have to adapt the variables `ACME` and `WORKDIR` to reflect the situation on 
+your machine. Under Linux the makefile should run without changes as long as ACME is in your `PATH`.
 
 Limitations at the moment:
 
@@ -22,4 +24,4 @@ Limitations at the moment:
 - As I do not have access to real hardware and therefore have to use the X16 emulator it is not 100% sure that the program
 performs in the same way on a real machine
 - I have not yet tested whether my fixed point math routines are actually faster than the floating point routines
-in the X16s math library and if they are really faster by how much.
+in the X16s math library and if they are really faster I don't know by how much.
