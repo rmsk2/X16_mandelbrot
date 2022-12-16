@@ -372,7 +372,7 @@ progStart
     +printStr .TXT_PRECALCULATING
     jsr preCalcMulTable    
     +printStr .TXT_DONE
-    ;jsr testSquare
+    ;jsr testEqual
     jsr waitForKey
     jsr bitMapOn
     jsr mandelLoop
@@ -380,23 +380,32 @@ progStart
     jsr bitMapOff
     rts
 
-.SQUARE_TEST_VAL
-!byte 1, 0,$fd,$8, $4
+.TEST_VAL_1
+!byte 1,0,0,0,4
 
-.SQUARE_TEST_VAL_L
-!byte 1, 0,$fd,$8, $4
+.TEST_VAL_2
+!byte 0,0,3,0,0
 
-.SQUARE_TEST_VAL_R
-!byte 1, 0,$fd,$8, $4
+.TEST_UNEQUAL
+!byte 13
+!tx "UNEQUAL!!!!!"
+!byte 13
 
-testSquare
-    +callFuncMono square32BitNormalized, .SQUARE_TEST_VAL
-    +printFixedPoint .SQUARE_TEST_VAL
+.TEST_EQUAL
+!byte 6
+!tx "EQUAL"
+!byte 13
+
+testEqual
     jsr printCRLF
-    +printFixedPoint .SQUARE_TEST_VAL_L
-    +printFixedPoint .SQUARE_TEST_VAL_L
-    +callFunc mul32BitNormalized, .SQUARE_TEST_VAL_L, .SQUARE_TEST_VAL_R
-    +printFixedPoint .SQUARE_TEST_VAL_R
+    +printFixedPoint .TEST_VAL_1
+    +printFixedPoint .TEST_VAL_2
+    +callFunc isEqual32Bit, .TEST_VAL_1, .TEST_VAL_2
+    bne .testNotEqual
+    +printStr .TEST_EQUAL
+    rts
+.testNotEqual
+    +printStr .TEST_UNEQUAL
     rts
 
 PROG_END

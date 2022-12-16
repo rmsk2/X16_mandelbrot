@@ -634,8 +634,37 @@ cmp32BitUnsigned
 .next3                           ; We get here only if all bytes before were equal
     dey
     lda (ADDR_OPER_LEFT), y
-    cmp (ADDR_OPER_RIGHT), y      ; carry contains result even if values are equal
+    cmp (ADDR_OPER_RIGHT), y     ; carry contains result even if values are equal
 .endCmp
+    rts
+
+
+; --------------------------------------------------
+; This subroutine expects its operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT
+; and checks if they are equal. This routine takes the sign into account, i.e. +0 und -0 are considered
+; to be equal
+;
+; The result is returned in the zero flag. Its is set if *opL == *opR. 
+; --------------------------------------------------
+isEqual32Bit
+    jsr cmp32BitUnsigned
+    bne .equalDone                ; absolute values are different => numbers are unequal, zero flag is not set
+    ; numbers are equal in their absolute value
+    ; Check for null 
+    ldy #4                        ; count from 4 to 1, ignore sign byte
+.checkNextByte
+    lda (ADDR_OPER_LEFT), y
+    cmp #0
+    bne .notZero                  ; the values are nonzero, check sign byte if they are equal
+    dey
+    bne .checkNextByte
+    bra .equalDone                ; absolute values are equal and all bytes are zero => ignore sign and zero bit is set
+.notZero
+    ; values are different and nonzero => check sign bytes
+    ldy #0
+    lda (ADDR_OPER_LEFT), y
+    eor (ADDR_OPER_RIGHT), y      ; zero flag is set, if the signs are equal
+.equalDone
     rts
 
 
