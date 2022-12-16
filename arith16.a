@@ -289,6 +289,13 @@ mul16BitPre
 ; be used if the bytes are simply interpreted as 32 bit integers with a prepended sign byte.
 ; --------------------------------------------------
 
+; initFixedPoint
+;     lda #<TEMP_MUL                ; set temp buffer address 
+;     sta ARITH_SCRATCH9
+;     lda #>TEMP_MUL
+;     sta ARITH_SCRATCH9+1
+;     rts
+
 ; --------------------------------------------------
 ; This subroutine expects it operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT
 ; and adds them. This routine ignores the sign byte.
@@ -371,18 +378,18 @@ sub32SwitchedUnsigned
 
 ; --------------------------------------------------
 ; This subroutine expects its operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT
-; It multiplies its operands as if they were unsigned 32 bit integers.
+; It multiplies its operands as if they were unsigned 32 bit integers. The algorithm used is the
+; basic algorithm taught at school for manual multiplication with the difference that the "digits" 
+; are bytes and we have access to a multiplication table for the multiplication of two single "digit"
+; numbers. The multiplication result is an 8 byte value that is stored in the (zero page) location 
+; TEMP_MUL-TEMP_MUL+7.
 ;
-; The result is returned in the address to which ARITH_SCRATCH9/ARITH_SCRATCH10 points 
+; The result is returned in the eight byte buffer starting at TEMP_MUL.
 ; --------------------------------------------------
 mul32BitUnsigned
     lda #0
     sta COUNT_L                   ; clear counter for digits of left operand
     sta COUNT_R                   ; clear counter for digits of right operand
-    lda #<TEMP_MUL                ; set temp buffer address 
-    sta ARITH_SCRATCH9
-    lda #>TEMP_MUL
-    sta ARITH_SCRATCH9+1
     ldx #7                        ; clear temp buffer
     lda #0
 .clear                            
@@ -406,12 +413,12 @@ mul32BitUnsigned
     tay                           ; move calculated index to y register
     txa                           ; move LSB of multiplication result to accu
     clc    
-    adc (ARITH_SCRATCH9), y       ; add LSB to intermediate result
-    sta (ARITH_SCRATCH9), y
+    adc TEMP_MUL, y               ; add LSB to intermediate result
+    sta TEMP_MUL, y
     iny
     lda HELP_MUL                  ; add MSB to intermediate result
-    adc (ARITH_SCRATCH9), y
-    sta (ARITH_SCRATCH9), y
+    adc TEMP_MUL, y
+    sta TEMP_MUL, y
     php                           ; save status register (mostly the carry bit)
     iny
     ; this comparison destroys the current value of the carry
@@ -419,8 +426,8 @@ mul32BitUnsigned
     beq .skipIfAtEnd              ; we are beyond the final byte. In this case ignore carry
     plp                           ; restore flag register, restore original carry bit
     lda #0                        ; add carry to intermediate result
-    adc (ARITH_SCRATCH9), y
-    sta (ARITH_SCRATCH9), y
+    adc TEMP_MUL, y
+    sta TEMP_MUL, y
     php                           ; push flag register so that we can pull it in the next instruction
 .skipIfAtEnd
     plp                           ; pull flag register (either pushed before or before comparison)
@@ -473,17 +480,12 @@ SQUARE_BUFFER_MSB
 ; multiplication table in banked RAM where this is possible and by reusing
 ; previously calculated partial results.
 ;
-; The result is returned in the address to which ARITH_SCRATCH9/ARITH_SCRATCH10 points
+; The result is returned in the eight byte buffer starting at TEMP_MUL.
 ; --------------------------------------------------
 square32BitUnsigned
     ; clear looping variables
     stz COUNT_L
-    stz COUNT_R
-    ; set temp buffer address 
-    lda #<TEMP_MUL                
-    sta ARITH_SCRATCH9
-    lda #>TEMP_MUL
-    sta ARITH_SCRATCH9+1    
+    stz COUNT_R  
     ; clear temp buffer
     ldx #7                        
     lda #0
@@ -530,6 +532,7 @@ square32BitUnsigned
     jsr mul16Bit                  ; multiply these 8 bit values. Result MSB in accu, LSB in x register
     pha                           ; save accu, x must not be changed
     ; calculate buffer address
+    ; and store partial result for reuse
     lda COUNT_L  
     asl
     asl
@@ -547,12 +550,12 @@ square32BitUnsigned
     tay                           ; move calculated index to y register
     txa                           ; move LSB of multiplication result to accu
     clc    
-    adc (ARITH_SCRATCH9), y       ; add LSB to intermediate result
-    sta (ARITH_SCRATCH9), y
+    adc TEMP_MUL, y               ; add LSB to intermediate result
+    sta TEMP_MUL, y
     iny
     lda HELP_MUL                  ; add MSB to intermediate result
-    adc (ARITH_SCRATCH9), y
-    sta (ARITH_SCRATCH9), y
+    adc TEMP_MUL, y
+    sta TEMP_MUL, y
     php                           ; save status register (mostly the carry bit)
     iny
     ; this comparison destroys the current value of the carry
@@ -560,8 +563,8 @@ square32BitUnsigned
     beq .skipIfAtEndSquare        ; we are beyond the final byte. In this case ignore carry
     plp                           ; restore flag register, restore original carry bit
     lda #0                        ; add carry to intermediate result
-    adc (ARITH_SCRATCH9), y
-    sta (ARITH_SCRATCH9), y
+    adc TEMP_MUL, y
+    sta TEMP_MUL, y
     php                           ; push flag register so that we can pull it in the next instruction
 .skipIfAtEndSquare
     plp                           ; pull flag register (either pushed before or before comparison)
@@ -574,8 +577,9 @@ square32BitUnsigned
     inc COUNT_R
     lda COUNT_R
     cmp #4
-    bne .loopSquare
-
+    beq .squareEnd
+    jmp .loopSquare
+.squareEnd
     rts    
 
 ; --------------------------------------------------

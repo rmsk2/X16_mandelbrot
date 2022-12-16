@@ -21,6 +21,8 @@ your machine. Under Linux the makefile should run without changes as long as ACM
 Limitations at the moment:
 
 - No user interface to change the section of the Mandelbrot set that is visualized
+- No possibility to save the caclulated picture
+- No possibilty to view a saved picture
 - As I do not have access to real hardware and therefore have to use the X16 emulator it is not 100% sure that the program
 performs in the same way on a real machine
 - I have not yet tested whether my fixed point math routines are actually faster than the floating point routines

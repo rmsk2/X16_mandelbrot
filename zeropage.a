@@ -5,9 +5,7 @@
 ARITH_SCRATCH1 = $30
 ARITH_SCRATCH2 = $31
 ARITH_SCRATCH3 = $32
-; $33 - $37 are free
-ARITH_SCRATCH9 = $38
-ARITH_SCRATCH10 = $39
+; $33 - $39 are free
 TEMP_PTR = $3A;$3B
 TEMP_PTR2 = $3C;$3D
 ; $3E - $40 are free
