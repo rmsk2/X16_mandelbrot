@@ -13,7 +13,8 @@ part of the speedup stems from the fact that the 65C02 in the X16 runs at 8MHz w
 C64 is clocked at 1MHz. But even when that is taken into account the X16 version is currently about
 25% faster.
 
-You need the ACME macro assembler to assemble the program.
+You need the ACME macro assembler to assemble the program. Use the `LOAD "FILENAME"` command followed
+by `RUN` to start the program.
 
 Limitations at the moment:
 
