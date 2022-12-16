@@ -285,6 +285,13 @@ mul16BitPre
 ;
 ;  sign byte | byte 0 fractional part | byte 1 fractional part | byte 2 fractional part | one byte integer part
 ;
+; examples:
+; 
+; +1.5  = 1 + 1/2       = $00, $00, $00, $80, $01
+; -2.25 = 1 + 1/4       = $01, $00, $00, $40, $02
+; +3.75 = 1 + 1/2 + 1/4 = $00, $00, $00, $C0, $03
+; -0.001953125 = 1/512  = $01, $00, $80, $00, $00
+;
 ; The values are interpreted as a fixed point decimal number but most of the routines can also 
 ; be used if the bytes are simply interpreted as 32 bit integers with a prepended sign byte.
 ; --------------------------------------------------
