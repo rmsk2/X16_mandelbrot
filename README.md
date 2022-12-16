@@ -18,6 +18,8 @@ by `RUN` to start the program. Under MacOS you have to set the variable `MAC` (u
 calling the makefile and you have to adapt the variables `ACME` and `WORKDIR` to reflect the situation on 
 your machine. Under Linux the makefile should run without changes as long as ACME is in your `PATH`.
 
+![](/result.png?raw=true "Example picture in hires mode")
+
 Limitations at the moment:
 
 - No user interface to change the section of the Mandelbrot set that is visualized
