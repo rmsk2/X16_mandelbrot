@@ -1,0 +1,55 @@
+VERA = $9F20
+VERA_CTRL = $9F25
+VERA_DATA_0 = $9F23
+CINT = $FF81
+screen_mode = $FF5F
+
+
+; --------------------------------------------------
+; This routine set the next point in a colour defined by 
+; NUM_ITER.
+;
+; drawPoint has no return value. 
+; --------------------------------------------------
+drawPoint
+    lda NUM_ITER
+    cmp MAX_ITER
+    beq .plotBlack
+    adc #47
+    sta VERA_DATA_0
+    rts
+.plotBlack
+    lda #0
+    sta VERA_DATA_0
+    rts
+
+
+; --------------------------------------------------
+; This routine turns the 320x240@256 colours mode on
+;
+; bitMapOn has no return value. 
+; --------------------------------------------------
+bitMapOn
+    lda #$80
+    clc
+    jsr screen_mode      
+    bcs .endErrInit      ; carry is set on error
+    lda #%11111110
+    and VERA_CTRL
+    sta VERA_CTRL        ; select data port 0
+    lda #0
+    sta VERA             
+    sta VERA+1
+    lda #16              ; set increment to 1 and set most significant bit of VRAM address to 0
+    sta VERA+2           ; VRAM address is set to 0 with a one byte increment
+.endErrInit
+    rts
+
+; --------------------------------------------------
+; This routine restores the text screen
+;
+; bitMapOff has no return value. 
+; --------------------------------------------------
+bitMapOff
+    jsr CINT
+    rts

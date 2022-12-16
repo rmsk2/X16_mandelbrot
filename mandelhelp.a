@@ -1,0 +1,64 @@
+; --------------------------------------------------
+; This routine resets the top left corner to use in the complex
+; plane and the stepping offsets in x and y direction to the default
+; values for the iconic mandelset picture in hires mode
+;
+; resetParameters has no return value. 
+; --------------------------------------------------
+resetParametersHires
+    +callFunc move32Bit, DEFAULT_STEP_X, STEP_X
+    +callFunc move32Bit, DEFAULT_STEP_Y, STEP_Y 
+    +callFunc move32Bit, DEFAULT_INIT_REAL, INIT_REAL
+    +callFunc move32Bit, DEFAULT_INIT_IMAG, INIT_IMAG       
+    rts
+
+; --------------------------------------------------
+; This routine halves the stepping width in x and y direction and thereby "zooms" 
+; into the Mandelbrot set
+;
+; increaseZoomLevel has no return value. 
+; --------------------------------------------------
+increaseZoomLevel
+    +callFuncMono halve32Bit, STEP_X
+    +callFuncMono halve32Bit, STEP_Y
+    rts
+
+.TEMP_X
+!byte 0,0
+.TEMP_Y
+!byte 0
+; --------------------------------------------------
+; This routine determines the point in the complex plane for which the pixel
+; at COUNT_X and COUNT_Y stands
+;
+; deriveParametersFromPixel has no return value. As a side effect it changes
+; INIT_REAL and INIT_IMAG 
+; --------------------------------------------------
+deriveParametersFromPixel
+    +callFunc move32Bit, INIT_IMAG, IMAG
+    +callFunc move32Bit, INIT_REAL, REAL
+
+    +load16BitImmediate 0, .TEMP_X
+.loopDeriveX
+    +cmp16Bit COUNT_X, .TEMP_X
+    beq .procYCoord
+    +callFunc add32Bit, STEP_X, REAL
+    +inc16Bit .TEMP_X
+    jmp .loopDeriveX
+
+.procYCoord
+    lda #0
+    sta .TEMP_Y
+.loopDeriveY
+    lda .TEMP_Y
+    cmp COUNT_Y
+    beq .deriveDone
+    +callFunc add32Bit, STEP_Y, IMAG
+    inc .TEMP_Y
+    jmp .loopDeriveY
+
+.deriveDone
+    +callFunc move32Bit, IMAG, INIT_IMAG
+    +callFunc move32Bit, REAL, INIT_REAL
+
+    rts

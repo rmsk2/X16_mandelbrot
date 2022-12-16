@@ -1,0 +1,22 @@
+; This file collects all zero page locations that are used by
+; the program. This should make it easier to prevent unintended
+; reuse of locations.
+
+ARITH_SCRATCH1 = $30
+ARITH_SCRATCH2 = $31
+ARITH_SCRATCH3 = $32
+; $33 - $37 are free
+ARITH_SCRATCH9 = $38
+ARITH_SCRATCH10 = $39
+TEMP_PTR = $3A;$3B
+TEMP_PTR2 = $3C;$3D
+; $3E - $40 are free
+PRE_PTR = $41
+PRE_PTR_HI = $42
+ADDR_OPER_LEFT = $43;$44
+ADDR_OPER_RIGHT = $45;$46
+COUNT_VAL_A = $47
+TEMP_MUL = $48;-$4F
+COUNT_L = $50
+COUNT_R = $51
+HELP_MUL = $52

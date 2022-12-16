@@ -1,0 +1,403 @@
+!to "mandelbr.prg", cbm
+!cpu 65c02
+
+
+*=$0801
+!byte $0c,$08,$e6,$07,$9e,$20,$32,$30,$36,$32,$00,$00,$00
+
+RES_X = 320
+RES_Y = 240
+
+ENTRY_POINT
+jmp progStart
+
+!source "zeropage.a"
+
+!zone arith
+!source "arith16.a"
+
+!zone string
+!source "string.a"
+
+!zone vera
+!source "vera.a"
+
+; --------------------------------------------------
+; values settable/usable by callers
+; --------------------------------------------------
+
+; maxmimum number of iterations
+MAX_ITER
+!byte 24
+
+; The number of iterations used for the current point
+NUM_ITER
+!byte 0
+
+; **************************************************
+; The following 4 values have to be contiguously laid out
+; in memory. The load and save routines expect this.
+
+; x offset to move in complex plane for next point
+STEP_X
+!byte 0, $66, $66, $02, $00
+
+; Y offset to move in complex plane for next line of picture
+STEP_Y
+!byte 1, $5C, $8F, $02, $00
+
+; real part of upper left point of picture
+INIT_REAL
+!byte 1, 0, 0, 0, 2
+
+; imaginary part of upper left point of picture
+INIT_IMAG
+!byte 0, 0, 0, $25, 1
+; **************************************************
+
+; Number of points (resolution) in x direction
+MAX_X
+!byte <RES_X, >RES_X 
+
+; Number of points (resolution) in y direction
+MAX_Y 
+!byte RES_Y
+
+; current X position
+COUNT_X
+!byte 0, 0
+
+; current y position
+COUNT_Y
+!byte 0
+
+
+; --------------------------------------------------
+; variables used for calculation
+; --------------------------------------------------
+
+REAL
+!byte 0,2,0,0,0
+
+IMAG
+!byte 0,3,0,0,0
+
+XN
+!byte 0,0,0,0,0
+
+YN
+!byte 0,0,0,0,0
+
+XN_OLD
+!byte 0,0,0,0,0
+
+TEMP_MAX
+!byte 0,0,0,0,0
+
+YN_SQUARE
+!byte 0,0,0,0,0
+
+XN_SQUARE
+!byte 0,0,0,0,0
+
+; --------------------------------------------------
+; constants
+; --------------------------------------------------
+
+; The fixed value 4. When a sequence's value is greater or equal to this number
+; the sequence defined by the current point diverges
+VAL_MAX
+!byte 0,0,0,0,4
+
+; x offset to move in complex plane default picture (full resolution)
+DEFAULT_STEP_X
+!byte 0, $66, $66, $02, $00
+
+; Y offset to move in complex plane for next line of default picture
+DEFAULT_STEP_Y
+!byte 1, $5C, $8F, $02, $00
+
+; real part of upper left point of default picture
+DEFAULT_INIT_REAL
+!byte 1, 0, 0, 0, 2
+
+; imaginary part of upper left point of picture default picture
+DEFAULT_INIT_IMAG
+!byte 0, 0, 0, $25, 1
+; **************************************************
+
+
+!zone main
+
+; --------------------------------------------------
+; This routine test if calculation of the Mandelbrot sequence should be stopped.
+; It is stopped, when the iteration count reached MAX_ITER of the absolute value
+; of the current sequence value is larger than 4
+;
+; This routine returns a nonzero value if computation has to be stopped. The zero
+; flag is cleared in this case.
+; --------------------------------------------------
+testMandelbrotDone
+    lda NUM_ITER
+    cmp MAX_ITER
+    bne .testLimit
+    jmp .stopCalc
+
+.testLimit
+    ; *****************************
+    ; abs_val = xn*xn + yn*yn
+    ; *****************************
+
+    ; XN_SQUARE <= XN
+    +callFunc move32Bit, XN, XN_SQUARE
+    ; XN_SQUARE <= XN_SQUARE * XN_SQUARE
+    +callFuncMono square32BitNormalized, XN_SQUARE
+    ; YN_SQUARE <= YN
+    +callFunc move32Bit, YN, YN_SQUARE
+    ; YN_SQUARE <= YN_SQUARE * YN_SQUARE
+    +callFuncMono square32BitNormalized, YN_SQUARE
+    ; TEMP_MAX <= XN_SQUARE
+    +callFunc move32Bit, XN_SQUARE, TEMP_MAX
+    ; TEMP_MAX <= YN_SQUARE + TEMP_MAX
+    +callFunc add32Bit, YN_SQUARE, TEMP_MAX
+
+    ; Stop if TEMP_MAX > 4
+    ; continue if TEMP_MAX <= 4
+
+    ; Carry is set if TEMP_MAX >= 4
+    ; Zero flag is set if TEMP_MAX == 4
+    +callFunc cmp32BitUnsigned, TEMP_MAX, VAL_MAX 
+    bcs .greaterPerhapsEqual
+.continueCalc                ; TEMP_MAX < 4
+    lda #0
+    rts
+.greaterPerhapsEqual         ; TEMP_MAX >= 4
+    beq .continueCalc        ; TEMP_MAX == 4? => If yes continue
+.stopCalc
+    lda #1                   ; TEMP_MAX > 4 => Stop
+    rts
+
+; --------------------------------------------------
+; This routine calculates the Mandelbrot sequence for the complex value given through
+; REAL und IMAG.
+;
+; The number of iterations performed is returned in NUM_ITER 
+; --------------------------------------------------
+calcOneMandelbrotSequence
+    lda #1
+    sta NUM_ITER
+
+    ; REAL <= XN
+    +callFunc move32Bit, REAL, XN
+    ; YN <= IMAG
+    +callFunc move32Bit, IMAG, YN
+
+.loopMandelbrot
+    jsr testMandelbrotDone
+    beq .continueMandelbrot
+    jmp .endMandelbrot
+
+.continueMandelbrot
+    ;+printByteLN NUM_ITER
+    ;+printFixedPoint XN
+    ;+printFixedPoint YN
+
+    ; XN_OLD <= XN
+    +callFunc move32Bit, XN, XN_OLD
+    
+    ; *****************************
+    ; xn+1 = xn*xn - yn*yn + real
+    ; *****************************
+
+    ; XN <= XN_SQUARE
+    +callFunc move32Bit, XN_SQUARE, XN
+    ; YN_SQUARE <= -YN_SQUARE
+    +callFuncMono neg32, YN_SQUARE
+    ; XN <= YN_SQUARE + XN
+    +callFunc add32Bit, YN_SQUARE, XN
+    ; XN <= REAL + XN
+    +callFunc add32Bit, REAL, XN
+
+    ; *****************************
+    ; yn+1 = 2*xn*yn + imag
+    ; *****************************
+
+    ; YN <= XN_OLD * YN 
+    +callFunc mul32BitNormalized, XN_OLD, YN
+    ; YN <= 2*YN
+    +callFuncMono double32Bit, YN
+    ; YN <= IMAG + YN
+    +callFunc add32Bit, IMAG, YN 
+
+    inc NUM_ITER
+    jmp .loopMandelbrot
+
+.endMandelbrot
+    rts
+
+; --------------------------------------------------
+; This routine initialises the data needed for computation
+;
+; initMandel has no return value. 
+; --------------------------------------------------
+initMandel
+    +load16BitImmediate 0, COUNT_X
+    lda #0
+    sta COUNT_Y
+    ; reset complex numbers
+    +callFunc move32Bit, INIT_REAL, REAL
+    +callFunc move32Bit, INIT_IMAG, IMAG
+
+    rts
+
+; --------------------------------------------------
+; This routine performs all necessary calculations for one point in the
+; complex plane. Calling this routine repeatedly calculates and draws the
+; selected rectangular part of the Mandelbrot set. If COUNT_Y reaches 240
+; all pixels have been drawn.
+;
+; nextMandel has no return value. 
+; --------------------------------------------------
+nextMandel
+    jsr calcOneMandelbrotSequence
+    jsr drawPoint
+    ; REAL <= STEP_X + REAL
+    +callFunc add32Bit, STEP_X, REAL
+    +inc16Bit COUNT_X
+    +cmp16Bit COUNT_X, MAX_X
+    bne .done
+    +load16BitImmediate 0, COUNT_X
+    ; REAL <= INIT_REAL
+    +callFunc move32Bit, INIT_REAL, REAL
+    ; IMAG <= STEP_Y + IMAG
+    +callFunc add32Bit, STEP_Y, IMAG
+    inc COUNT_Y
+.done
+    rts
+
+
+; --------------------------------------------------
+; This routine visualizes the Mandelbrot set 
+; --------------------------------------------------
+mandelLoop
+    jsr initMandel
+
+.loopUntilFinished
+    jsr nextMandel
+    lda COUNT_Y
+    cmp MAX_Y
+    bne .loopUntilFinished
+
+    rts
+
+
+.COUNT_VAL_A
+!byte 0
+.COUNT_VAL_B
+!byte 0
+.BANK_NUM_HI
+!byte 0
+.TEMP_LO
+!byte 0
+.TEMP_HI
+!byte 0
+
+
+; --------------------------------------------------
+; This routine precalculates a multiplication table for a*b
+; where a*b are bytes. The result is store in the banked memory
+; that can be mapped to $A000-$BFFF.‚
+; --------------------------------------------------
+preCalcMulTable
+    stz PRE_PTR
+.preCalcLoop
+    ; precalculate multiplication value
+    lda .COUNT_VAL_A
+    ldx .COUNT_VAL_B
+    jsr mul16BitPre
+    sta .TEMP_HI
+    stx .TEMP_LO
+
+    ; determine bank num for lo and hi byte
+    lda .COUNT_VAL_A
+    and #%00000111                   ; bank num for lo byte is lower 3 bits of value a and a 0
+    asl                              ; make room for lower bit for hi byte bank
+    eor #%00010000                   ; set bit 5 to avoid bank 0 which is used by the kernal
+    sta 0                            ; make selected 8K bank appear at $A000
+    
+    ; calculate offset in bank
+    lda .COUNT_VAL_A
+    lsr
+    lsr
+    lsr                              ; discard lower three bits
+    clc
+    adc #$A0                         ; add hi byte of banking area start address which gives the offset
+    sta PRE_PTR_HI
+    ldy .COUNT_VAL_B
+
+    ; store lo byte    
+    lda .TEMP_LO
+    sta (PRE_PTR), y
+
+    ; change bank and store hi byte
+    lda 0
+    eor #$01                         ; hi bytes go into the bank where bit 0 is set
+    sta 0                            ; make selected 8K bank appear at $A000
+    lda .TEMP_HI
+    sta (PRE_PTR), y
+
+    ; update loop variables
+    inc .COUNT_VAL_B
+    bne .preCalcLoop    
+    inc .COUNT_VAL_A
+    bne .preCalcLoop 
+
+    rts
+
+.TXT_PRECALCULATING
+!byte 18
+!tx "PRECALCULATING ..."
+!byte 13
+
+.TXT_DONE
+!byte 27
+!tx "DONE."
+!byte 13
+!tx "PRESS KEY TO CONTINUE"
+
+; --------------------------------------------------
+; This routine is the main entry point of the program
+; --------------------------------------------------
+progStart
+    +printStr .TXT_PRECALCULATING
+    jsr preCalcMulTable    
+    +printStr .TXT_DONE
+    ;jsr testSquare
+    jsr waitForKey
+    jsr bitMapOn
+    jsr mandelLoop
+    jsr waitForKey
+    jsr bitMapOff
+    rts
+
+.SQUARE_TEST_VAL
+!byte 1, 0,$fd,$8, $4
+
+.SQUARE_TEST_VAL_L
+!byte 1, 0,$fd,$8, $4
+
+.SQUARE_TEST_VAL_R
+!byte 1, 0,$fd,$8, $4
+
+testSquare
+    +callFuncMono square32BitNormalized, .SQUARE_TEST_VAL
+    +printFixedPoint .SQUARE_TEST_VAL
+    jsr printCRLF
+    +printFixedPoint .SQUARE_TEST_VAL_L
+    +printFixedPoint .SQUARE_TEST_VAL_L
+    +callFunc mul32BitNormalized, .SQUARE_TEST_VAL_L, .SQUARE_TEST_VAL_R
+    +printFixedPoint .SQUARE_TEST_VAL_R
+    rts
+
+PROG_END
+    !byte 0
