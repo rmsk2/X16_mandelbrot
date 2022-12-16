@@ -296,12 +296,6 @@ mul16BitPre
 ; be used if the bytes are simply interpreted as 32 bit integers with a prepended sign byte.
 ; --------------------------------------------------
 
-; initFixedPoint
-;     lda #<TEMP_MUL                ; set temp buffer address 
-;     sta ARITH_SCRATCH9
-;     lda #>TEMP_MUL
-;     sta ARITH_SCRATCH9+1
-;     rts
 
 ; --------------------------------------------------
 ; This subroutine expects it operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT
