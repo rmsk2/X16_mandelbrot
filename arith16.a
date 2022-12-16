@@ -450,7 +450,7 @@ mul32BitUnsigned
 ; This subroutine expects its operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT
 ; and multplies them. This routine ignores the sign bytes.
 ;
-; It also and normalizes the result as a fixed point value of the correct format of 8 bits before
+; It also normalizes the result as a fixed point value of the correct format of 8 bits before
 ; the comma and 24 after the comma. The result is returned in ADDR_OPER_RIGHT.
 ; --------------------------------------------------
 mul32BitNormalizedUnsigned
