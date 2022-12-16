@@ -6,4 +6,15 @@ makes use of commander X16 features like:
 - More colours to use in Hires mode (256 for the X16, 2 for the C64)
 - New instructions for the 65C02 (well only stz and bra)
 
-**This is work in progress**.
+**This is work in progress**. Currently the default section of the Mandelbrot set using the full resolution 
+of 320x240 at a depth of 24 steps is calculated in roughly 14 minutes. The C64 version takes two and a
+halve hours to calculate the same visualisation in a resolution of 320x200. Of course the biggest
+part of the speedup stems from the fact that the 65C02 in the X16 runs at 8MHz where the 6510 in a
+C64 is clocked at 1MHz. But even when that is taken into account the X16 version is currently about
+25% faster.
+
+Limitations at the moment:
+
+- No user interface to change the section of the Mandelbrot set that is visualized
+- As I do not have access to real hardware and therefore have to use the X16 emulator it is not 100% sure that the program
+performs in the same way on a real machine
