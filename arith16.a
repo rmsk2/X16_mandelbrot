@@ -663,7 +663,7 @@ isEqual32Bit
     ; values are different and nonzero => check sign bytes
     ldy #0
     lda (ADDR_OPER_LEFT), y
-    eor (ADDR_OPER_RIGHT), y      ; zero flag is set if the signs are equal as the XOR result is zero
+    eor (ADDR_OPER_RIGHT), y      ; zero flag is set if the signs are equal as in that case the XOR result is zero
 .equalDone
     rts
 
