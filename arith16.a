@@ -654,8 +654,7 @@ isEqual32Bit
     ldy #4                        ; count from 4 to 1, ignore sign byte
 .checkNextByte
     lda (ADDR_OPER_LEFT), y
-    cmp #0
-    bne .notZero                  ; the values are nonzero, they are equal if the sign byte is equal
+    bne .notZero                  ; There is at least one non zero byte, therefore the values are equal if the signs are equal
     dey
     bne .checkNextByte
     bra .equalDone                ; absolute values are equal and all bytes are zero => ignore sign and zero flag is already set

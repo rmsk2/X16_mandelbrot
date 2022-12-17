@@ -372,7 +372,7 @@ progStart
     +printStr .TXT_PRECALCULATING
     jsr preCalcMulTable    
     +printStr .TXT_DONE
-    ;jsr testEqual
+    jsr testEqual
     jsr waitForKey
     jsr bitMapOn
     jsr mandelLoop
@@ -381,10 +381,10 @@ progStart
     rts
 
 .TEST_VAL_1
-!byte 1,0,0,0,4
+!byte 1,0,0,0,1
 
 .TEST_VAL_2
-!byte 0,0,3,0,0
+!byte 0,0,0,0,1
 
 .TEST_UNEQUAL
 !byte 13
