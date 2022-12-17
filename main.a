@@ -372,7 +372,7 @@ progStart
     +printStr .TXT_PRECALCULATING
     jsr preCalcMulTable    
     +printStr .TXT_DONE
-    jsr testEqual
+    ;jsr testEqual
     jsr waitForKey
     jsr bitMapOn
     jsr mandelLoop
