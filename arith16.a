@@ -642,7 +642,8 @@ cmp32BitUnsigned
 ; --------------------------------------------------
 ; This subroutine expects its operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT
 ; and checks if they are equal. This routine takes the sign into account, i.e. +0 und -0 are considered
-; to be equal
+; to be equal. The special case where Null can have a positive or negative sign byte requires separate
+; logic in the code below.
 ;
 ; The result is returned in the zero flag. Its is set if *opL == *opR. 
 ; --------------------------------------------------
@@ -650,7 +651,7 @@ isEqual32Bit
     jsr cmp32BitUnsigned
     bne .equalDone                ; absolute values are different => numbers are unequal, zero flag is already cleared
     ; numbers are equal in their absolute value
-    ; Check for null 
+    ; Check for all bytes zero = Null 
     ldy #4                        ; count from 4 to 1, ignore sign byte
 .checkNextByte
     lda (ADDR_OPER_LEFT), y
@@ -659,7 +660,7 @@ isEqual32Bit
     bne .checkNextByte
     bra .equalDone                ; absolute values are equal and all bytes are zero => ignore sign and zero flag is already set
 .notZero
-    ; values are different and nonzero => check sign bytes
+    ; Absolute values of operands are equal and they are nonzero => check sign bytes
     ldy #0
     lda (ADDR_OPER_LEFT), y
     eor (ADDR_OPER_RIGHT), y      ; zero flag is set if the signs are equal as in that case the XOR result is zero
