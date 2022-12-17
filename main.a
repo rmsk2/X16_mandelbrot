@@ -198,10 +198,6 @@ calcOneMandelbrotSequence
     jmp .endMandelbrot
 
 .continueMandelbrot
-    ;+printByteLN NUM_ITER
-    ;+printFixedPoint XN
-    ;+printFixedPoint YN
-
     ; XN_OLD <= XN
     +callFunc move32Bit, XN, XN_OLD
     
