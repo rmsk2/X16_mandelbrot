@@ -651,7 +651,7 @@ isEqual32Bit
     jsr cmp32BitUnsigned
     bne .equalDone                ; absolute values are different => numbers are unequal, zero flag is already cleared
     ; numbers are equal in their absolute value
-    ; Check for all bytes zero = Null 
+    ; Check if all bytes are zero, i.e. check if both operands are zero 
     ldy #4                        ; count from 4 to 1, ignore sign byte
 .checkNextByte
     lda (ADDR_OPER_LEFT), y
