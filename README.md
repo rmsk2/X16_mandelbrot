@@ -6,12 +6,12 @@ makes use of commander X16 features like:
 - More colours to use in Hires mode (256 for the X16, 2 for the C64)
 - New instructions for the 65C02 (well only `stz` and `bra`)
 
-**This is work in progress**. Currently the default section of the Mandelbrot set using the full resolution 
-of 320x240 at a depth of 24 steps is calculated in roughly 14 minutes. The C64 version takes two and a
-half hours to calculate the same visualisation in a resolution of 320x200. Of course the biggest
-part of the speedup stems from the fact that the 65C02 in the X16 runs at 8MHz where the 6510 in a
-C64 is clocked at 1MHz. But even if that is taken into account the X16 version is currently about
-25% faster.
+**This is work in progress**. Currently the default section of the Mandelbrot set (see screenshot below) 
+using the X16s full resolution of 320x240 at a depth of 24 iterations is calculated in roughly 14 minutes. 
+The  C64 version takes two and a half hours to calculate the same visualisation in a resolution of 320x200. 
+Of course the biggest part of the speedup stems from the fact that the 65C02 in the X16 runs at 8MHz where 
+the 6510 in a C64 is clocked at 1MHz. But even if that is taken into account the X16 version is currently 
+about 25% faster.
 
 You need the ACME macro assembler to assemble the program. Use the `LOAD "FILENAME"` command followed
 by `RUN` to start the program. Under MacOS you have to set the variable `MAC` (use `make MAC=1`) when 

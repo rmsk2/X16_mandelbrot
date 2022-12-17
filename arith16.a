@@ -648,22 +648,22 @@ cmp32BitUnsigned
 ; --------------------------------------------------
 isEqual32Bit
     jsr cmp32BitUnsigned
-    bne .equalDone                ; absolute values are different => numbers are unequal, zero flag is not set
+    bne .equalDone                ; absolute values are different => numbers are unequal, zero flag is already cleared
     ; numbers are equal in their absolute value
     ; Check for null 
     ldy #4                        ; count from 4 to 1, ignore sign byte
 .checkNextByte
     lda (ADDR_OPER_LEFT), y
     cmp #0
-    bne .notZero                  ; the values are nonzero, check sign byte if they are equal
+    bne .notZero                  ; the values are nonzero, they are equal if the sign byte is equal
     dey
     bne .checkNextByte
-    bra .equalDone                ; absolute values are equal and all bytes are zero => ignore sign and zero bit is set
+    bra .equalDone                ; absolute values are equal and all bytes are zero => ignore sign and zero flag is already set
 .notZero
     ; values are different and nonzero => check sign bytes
     ldy #0
     lda (ADDR_OPER_LEFT), y
-    eor (ADDR_OPER_RIGHT), y      ; zero flag is set, if the signs are equal
+    eor (ADDR_OPER_RIGHT), y      ; zero flag is set if the signs are equal as the XOR result is zero
 .equalDone
     rts
 
