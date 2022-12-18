@@ -1,0 +1,225 @@
+
+TEXT_OK
+!byte 4
+!tx "OK"
+!byte 13, 13
+
+TEXT_FAILURE
+!byte 10
+!tx "FAILURE!!"
+!byte 13
+
+TEXT_EXPECTED
+!byte 10
+!tx "EXPECTED: "
+
+TEXT_EQUAL
+!byte 6
+!tx "EQUAL"
+!byte 13
+
+TEXT_CARRY_CLEAR
+!byte 11
+!tx "CARRY CLEAR"
+!byte 13
+
+TEXT_UNEQUAL
+!byte 8
+!tx "UNEQUAL"
+!byte 13
+
+TEXT_CARRY_SET
+!byte 10
+!tx "CARRY SET"
+!byte 13
+
+
+!macro perfTest .func, .operL, .operR, .info {    
+    +printStr .info
+    jsr printCRLF
+    +printFixedPoint .operL
+    +printFixedPoint .operR
+    +callFunc .func, .operL, .operR
+    php
+    +printFixedPoint .operR
+    plp
+}
+
+!macro perfTestMono .func, .operL, .info {    
+    +printStr .info
+    jsr printCRLF
+    +printFixedPoint .operL
+    +callFuncMono .func, .operL
+    php
+    +printFixedPoint .operL
+    plp
+}
+
+!macro perfEqual .operL, .operR, .info {
+    +printStr .info
+    jsr printCRLF
+    +printFixedPoint .operL
+    +printFixedPoint .operR
+    +callFunc isEqual32Bit, .operL, .operR
+}
+
+!macro expectValue .val, .ref{
+    +callFunc isEqual32Bit, .val, .ref
+    beq .testOK
+    +printStr TEXT_FAILURE
+    +printStr TEXT_EXPECTED
+    +printFixedPoint .ref
+    jmp testEnd
+.testOK
+    +printStr TEXT_OK
+}
+
+!macro expectEqual {
+    beq .testOK 
+    +printStr TEXT_FAILURE
+    +printStr TEXT_EXPECTED
+    +printStr TEXT_EQUAL
+    jmp testEnd
+.testOK
+    +printStr TEXT_OK
+}
+
+!macro expectUnequal {
+    bne .testOK 
+    +printStr TEXT_FAILURE
+    +printStr TEXT_EXPECTED
+    +printStr TEXT_UNEQUAL
+    jmp testEnd
+.testOK
+    +printStr TEXT_OK
+}
+
+!macro expectCarryClear {
+    bcc .testOK 
+    +printStr TEXT_FAILURE
+    +printStr TEXT_EXPECTED
+    +printStr TEXT_CARRY_CLEAR
+    jmp testEnd
+.testOK
+    +printStr TEXT_OK
+}
+
+!macro expectCarrySet {
+    bcs .testOK 
+    +printStr TEXT_FAILURE
+    +printStr TEXT_EXPECTED
+    +printStr TEXT_CARRY_SET
+    jmp testEnd
+.testOK
+    +printStr TEXT_OK
+}
+
+.MINUS_ONE
+!byte 1,0,0,0,1
+
+.PLUS_ONE
+!byte 0,0,0,0,1
+
+; --------------------------------------------------
+
+.TEXT_EQUAL_1
+!byte 16
+!tx "+1 AND -1 DIFFER"
+
+.TEXT_MUL_1
+!byte 11
+!tx "-1 * 1 = -1"
+
+.TEXT_SQUARE_1
+!byte 13
+!tx "SQUARE -1 = 1"
+
+; -1
+.TEST_VAL_1
+!byte 1,0,0,0,1
+
+;+1
+.TEST_VAL_2
+!byte 0,0,0,0,1
+
+; --------------------------------------------------
+
+.TEXT_EQUAL_2
+!byte 19
+!tx "+0 AND -0 ARE EQUAL"
+
+.PLUS_NULL
+!byte 0,0,0,0,0
+
+.MINUS_NULL
+!byte 1,0,0,0,0
+
+; --------------------------------------------------
+
+.TEXT_GT_1
+!byte 6
+!tx "2 >= 1"
+
+.TEXT_LT_1
+!byte 6
+!tx "1 < 2"
+
+.PLUS_TWO
+!byte 0,0,0,0,2
+
+; --------------------------------------------------
+
+.TEXT_SQ_1
+!byte 18
+!tx "SQUARE -1/4 = 1/16"
+
+.VAL_FOURTH
+!byte 1, 0, 0, $40, 0 
+
+.VAL_16TH
+!byte 0, 0, 0, $10, 0
+
+; --------------------------------------------------
+
+.TEXT_MUL_2
+!byte 17
+!tx "-1/4 * -1/2 = 1/8"
+
+.VAL_FOURTH_2
+!byte 1, 0, 0, $40, 0 
+
+.VAL_HALVE
+!byte 1, 0, 0, $80, 0 
+
+.VAL_8TH
+!byte 0, 0, 0, $20, 0
+
+; --------------------------------------------------
+
+testMain
+    +perfEqual .TEST_VAL_1, .TEST_VAL_2, .TEXT_EQUAL_1
+    +expectUnequal 
+; --------------------------------------------------    
+    +perfEqual .PLUS_NULL, .MINUS_NULL, .TEXT_EQUAL_2
+    +expectEqual
+; --------------------------------------------------    
+    +perfTest mul32BitNormalized, .TEST_VAL_1, .TEST_VAL_2, .TEXT_MUL_1
+    +expectValue .TEST_VAL_2, .MINUS_ONE 
+; --------------------------------------------------    
+    +perfTestMono square32BitNormalized, .TEST_VAL_1, .TEXT_SQUARE_1
+    +expectValue .TEST_VAL_1, .PLUS_ONE
+; --------------------------------------------------    
+    +perfTest cmp32BitUnsigned, .PLUS_TWO, .PLUS_ONE, .TEXT_GT_1
+    +expectCarrySet
+; --------------------------------------------------    
+    +perfTest cmp32BitUnsigned, .PLUS_ONE, .PLUS_TWO, .TEXT_LT_1
+    +expectCarryClear
+; --------------------------------------------------    
+    +perfTestMono square32BitNormalized, .VAL_FOURTH, .TEXT_SQ_1
+    +expectValue .VAL_FOURTH, .VAL_16TH 
+; --------------------------------------------------    
+    +perfTest mul32BitNormalized, .VAL_FOURTH_2, .VAL_HALVE, .TEXT_MUL_2
+    +expectValue .VAL_HALVE, .VAL_8TH 
+; --------------------------------------------------    
+testEnd
+    rts

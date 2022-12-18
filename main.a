@@ -1,7 +1,7 @@
 !to "mandelbr.prg", cbm
 !cpu 65c02
 
-;TESTS = 1
+TESTS = 1
 
 *=$0801
 !byte $0c,$08,$e6,$07,$9e,$20,$32,$30,$36,$32,$00,$00,$00
@@ -352,27 +352,25 @@ preCalcMulTable
     rts
 
 
-!ifndef TESTS {
-
-.TXT_PRECALCULATING
-!byte 18
-!tx "PRECALCULATING ..."
+TXT_PRECALCULATING
+!byte 19
+!tx "PRECALCULATING ... "
 !byte 13
 
-.TXT_DONE
-!byte 27
+TXT_DONE
+!byte 6
 !tx "DONE."
 !byte 13
-!tx "PRESS KEY TO CONTINUE"
 
+
+!ifndef TESTS {
 ; --------------------------------------------------
 ; This routine is the main entry point of the program
 ; --------------------------------------------------
 progStart
-    +printStr .TXT_PRECALCULATING
+    +printStr TXT_PRECALCULATING
     jsr preCalcMulTable    
-    +printStr .TXT_DONE
-    jsr waitForKey
+    +printStr TXT_DONE
     jsr bitMapOn
     jsr mandelLoop
     jsr waitForKey
@@ -380,40 +378,17 @@ progStart
     rts
 
 } else {
-
+; --------------------------------------------------
+; Run tests only
+; --------------------------------------------------
 !zone tests
 !source "tests.a"
 
 progStart
-    jsr testEqual
-    rts
-
-.TEST_VAL_1
-!byte 1,0,0,0,1
-
-.TEST_VAL_2
-!byte 0,0,0,0,1
-
-.TEST_UNEQUAL
-!byte 13
-!tx "UNEQUAL!!!!!"
-!byte 13
-
-.TEST_EQUAL
-!byte 6
-!tx "EQUAL"
-!byte 13
-
-testEqual
-    jsr printCRLF
-    +printFixedPoint .TEST_VAL_1
-    +printFixedPoint .TEST_VAL_2
-    +callFunc isEqual32Bit, .TEST_VAL_1, .TEST_VAL_2
-    bne .testNotEqual
-    +printStr .TEST_EQUAL
-    rts
-.testNotEqual
-    +printStr .TEST_UNEQUAL
+    +printStr TXT_PRECALCULATING
+    jsr preCalcMulTable    
+    +printStr TXT_DONE
+    jsr testMain
     rts
 }
 
