@@ -1,6 +1,7 @@
 !to "mandelbr.prg", cbm
 !cpu 65c02
 
+;TESTS = 1
 
 *=$0801
 !byte $0c,$08,$e6,$07,$9e,$20,$32,$30,$36,$32,$00,$00,$00
@@ -350,6 +351,9 @@ preCalcMulTable
 
     rts
 
+
+!ifndef TESTS {
+
 .TXT_PRECALCULATING
 !byte 18
 !tx "PRECALCULATING ..."
@@ -368,12 +372,20 @@ progStart
     +printStr .TXT_PRECALCULATING
     jsr preCalcMulTable    
     +printStr .TXT_DONE
-    ;jsr testEqual
     jsr waitForKey
     jsr bitMapOn
     jsr mandelLoop
     jsr waitForKey
     jsr bitMapOff
+    rts
+
+} else {
+
+!zone tests
+!source "tests.a"
+
+progStart
+    jsr testEqual
     rts
 
 .TEST_VAL_1
@@ -403,6 +415,7 @@ testEqual
 .testNotEqual
     +printStr .TEST_UNEQUAL
     rts
+}
 
 PROG_END
     !byte 0

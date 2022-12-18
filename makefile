@@ -15,5 +15,5 @@ clean:
 	rm $(WORKDIR)/mandelbr.prg
 	rm $(WORKDIR)/mandelbr.txt
 
-mandelbr.prg: main.a arith16.a string.a vera.a mandelhelp.a zeropage.a
+mandelbr.prg: main.a arith16.a string.a vera.a mandelhelp.a zeropage.a tests.a
 	$(ACME) -l $(WORKDIR)/mandelbr.txt $(WORKDIR)/main.a
