@@ -55,12 +55,12 @@ TEXT_CARRY_SET
     plp
 }
 
-!macro perfEqual .operL, .operR, .info {
+!macro perfTestCompare .func, .operL, .operR, .info {
     +printStr .info
     jsr printCRLF
     +printFixedPoint .operL
     +printFixedPoint .operR
-    +callFunc isEqual32Bit, .operL, .operR
+    +callFunc .func, .operL, .operR
 }
 
 !macro expectValue .val, .ref{
@@ -197,10 +197,10 @@ TEXT_CARRY_SET
 ; --------------------------------------------------
 
 testMain
-    +perfEqual .TEST_VAL_1, .TEST_VAL_2, .TEXT_EQUAL_1
+    +perfTestCompare isEqual32Bit, .TEST_VAL_1, .TEST_VAL_2, .TEXT_EQUAL_1
     +expectUnequal 
 ; --------------------------------------------------    
-    +perfEqual .PLUS_NULL, .MINUS_NULL, .TEXT_EQUAL_2
+    +perfTestCompare isEqual32Bit, .PLUS_NULL, .MINUS_NULL, .TEXT_EQUAL_2
     +expectEqual
 ; --------------------------------------------------    
     +perfTest mul32BitNormalized, .TEST_VAL_1, .TEST_VAL_2, .TEXT_MUL_1
@@ -209,10 +209,10 @@ testMain
     +perfTestMono square32BitNormalized, .TEST_VAL_1, .TEXT_SQUARE_1
     +expectValue .TEST_VAL_1, .PLUS_ONE
 ; --------------------------------------------------    
-    +perfTest cmp32BitUnsigned, .PLUS_TWO, .PLUS_ONE, .TEXT_GT_1
+    +perfTestCompare cmp32BitUnsigned, .PLUS_TWO, .PLUS_ONE, .TEXT_GT_1
     +expectCarrySet
 ; --------------------------------------------------    
-    +perfTest cmp32BitUnsigned, .PLUS_ONE, .PLUS_TWO, .TEXT_LT_1
+    +perfTestCompare cmp32BitUnsigned, .PLUS_ONE, .PLUS_TWO, .TEXT_LT_1
     +expectCarryClear
 ; --------------------------------------------------    
     +perfTestMono square32BitNormalized, .VAL_FOURTH, .TEXT_SQ_1

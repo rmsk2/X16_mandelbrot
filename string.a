@@ -112,6 +112,11 @@ waitForKey
     rts               ; ASCII Code of pressed key is now in accumulator
 
 
+checkKey
+    jsr GETIN         ; get key from keyboard
+    cmp #0            ; if 0, no key pressed
+    rts
+
 ; --------------------------------------------------
 ; About the string routines: The first byte of a string is a length
 ; value followed by the characters of the string. The maximum length

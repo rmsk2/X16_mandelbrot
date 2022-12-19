@@ -201,13 +201,12 @@ SQ_TAB_MSB
 ; twice as fast as the simple multiplication routine mul16BitShiftAdd which uses shift and add
 ; --------------------------------------------------
 !macro mul16BitLookup .addr1, .addr2, .addr3 {
-.multiply:
 	sta .addr1
 	cpx .addr1
 	bcc .sorted
 	txa
 	ldx .addr1
-.sorted:
+.sorted
 	sta .addr3
 	stx .addr1
 	sec

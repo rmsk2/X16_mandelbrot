@@ -273,18 +273,28 @@ nextMandel
     rts
 
 
+.INTERRUPTED
+!byte 0
+
 ; --------------------------------------------------
 ; This routine visualizes the Mandelbrot set 
 ; --------------------------------------------------
 mandelLoop
+    stz .INTERRUPTED
     jsr initMandel
 
 .loopUntilFinished
     jsr nextMandel
+    jsr checkKey
+    bne .interruptMandel
     lda COUNT_Y
     cmp MAX_Y
     bne .loopUntilFinished
-
+    bra .doneMandel
+.interruptMandel
+    lda #1
+    sta .INTERRUPTED
+.doneMandel
     rts
 
 
@@ -309,7 +319,10 @@ progStart
     +printStr TXT_DONE
     jsr bitMapOn
     jsr mandelLoop
+    lda .INTERRUPTED
+    bne .finish
     jsr waitForKey
+.finish
     jsr bitMapOff
     rts
 
