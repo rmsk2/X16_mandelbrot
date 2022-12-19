@@ -196,6 +196,21 @@ TEXT_CARRY_SET
 
 ; --------------------------------------------------
 
+.TEXT_ADD_1
+!byte 22
+!tx "1 3/4 + -(1 1/2) = 1/4"
+
+.VAL_1_ADD_1
+!byte 0,0,0,$c0,1
+
+.VAL_2_ADD_1
+!byte 1,0,0,$80,1
+
+.ADD_1_RES
+!byte 0,0,0,$40,0
+
+; --------------------------------------------------
+
 testMain
     +perfTestCompare isEqual32Bit, .TEST_VAL_1, .TEST_VAL_2, .TEXT_EQUAL_1
     +expectUnequal 
@@ -220,6 +235,9 @@ testMain
 ; --------------------------------------------------    
     +perfTest mul32BitNormalized, .VAL_FOURTH_2, .VAL_HALVE, .TEXT_MUL_2
     +expectValue .VAL_HALVE, .VAL_8TH 
+; --------------------------------------------------    
+    +perfTest add32Bit, .VAL_1_ADD_1, .VAL_2_ADD_1, .TEXT_ADD_1
+    +expectValue .VAL_2_ADD_1, .ADD_1_RES 
 ; --------------------------------------------------    
 testEnd
     rts
