@@ -536,7 +536,7 @@ mul32BitNormalizedUnsigned
 ; This subroutine expects its operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT
 ; and multplies them. This routine ignores the sign bytes.
 ;
-; It also normalizes the result as 32 bit unsigned integer, i.e. it only looks at the four least
+; It also normalizes the result as a 32 bit unsigned integer, i.e. it only looks at the four least
 ; significant bytes of the full 64 bit multiplication result. The result is returned in ADDR_OPER_RIGHT.
 ; --------------------------------------------------
 mul32BitUnsignedInt
