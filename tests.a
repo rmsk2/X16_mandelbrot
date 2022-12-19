@@ -211,6 +211,22 @@ TEXT_CARRY_SET
 
 ; --------------------------------------------------
 
+.TEXT_MUL_3
+!byte 22
+!tx "FFFF * FC89 = FC880377"
+
+.VAL_1_MUL_3
+!byte 0,$ff,$ff,0,0
+
+.VAL_2_MUL_3
+!byte 0,$89,$fc,0,0
+
+.MUL_3_RES
+!byte 0,$77,3,$88,$fc
+
+; --------------------------------------------------
+
+
 testMain
     +perfTestCompare isEqual32Bit, .TEST_VAL_1, .TEST_VAL_2, .TEXT_EQUAL_1
     +expectUnequal 
@@ -239,5 +255,9 @@ testMain
     +perfTest add32Bit, .VAL_1_ADD_1, .VAL_2_ADD_1, .TEXT_ADD_1
     +expectValue .VAL_2_ADD_1, .ADD_1_RES 
 ; --------------------------------------------------    
+    +perfTest mul32BitUnsignedInt, .VAL_1_MUL_3, .VAL_2_MUL_3, .TEXT_MUL_3
+    +expectValue .VAL_2_MUL_3, .MUL_3_RES 
+; --------------------------------------------------    
+
 testEnd
     rts
