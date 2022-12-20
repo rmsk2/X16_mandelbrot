@@ -335,7 +335,7 @@ TXT_DONE
 
 progStart
     +printStr TXT_PRECALCULATING
-    jsr preCalcMulTable    
+    jsr initArithmetic    
     +printStr TXT_DONE
     jsr testMain
     rts
