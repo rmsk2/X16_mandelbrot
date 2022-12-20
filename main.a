@@ -16,6 +16,7 @@ jmp progStart
 
 !zone arith
 !source "arith16.a"
+!source "arith32.a"
 
 !zone string
 !source "string.a"
@@ -298,25 +299,13 @@ mandelLoop
     rts
 
 
-TXT_PRECALCULATING
-!byte 19
-!tx "PRECALCULATING ... "
-!byte 13
-
-TXT_DONE
-!byte 6
-!tx "DONE."
-!byte 13
-
 
 !ifndef TESTS {
 ; --------------------------------------------------
 ; This routine is the main entry point of the program
 ; --------------------------------------------------
 progStart
-    +printStr TXT_PRECALCULATING
-    jsr preCalcMulTable    
-    +printStr TXT_DONE
+    jsr initArithmetic
     jsr bitMapOn
     jsr mandelLoop
     lda .INTERRUPTED
@@ -327,6 +316,17 @@ progStart
     rts
 
 } else {
+
+TXT_PRECALCULATING
+!byte 19
+!tx "PRECALCULATING ... "
+!byte 13
+
+TXT_DONE
+!byte 6
+!tx "DONE."
+!byte 13
+
 ; --------------------------------------------------
 ; Run tests only
 ; --------------------------------------------------

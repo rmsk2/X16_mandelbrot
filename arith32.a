@@ -1,0 +1,634 @@
+; --------------------------------------------------
+; The fixed point 32 bit routines represent a number as 5 bytes. The first byte
+; is the sign where 1 indicates a negative sign and 0 a positive sign. The sign byte
+; is followed by the 32 bits of the fixed point number. The lowest value byte
+; contains the eight least significant bits after the comma, followed by the next
+; more significant bits after the comma and so on. The last byte contains the eight
+; bits before the fixed point.
+;
+; I.e. the memory layout is as follows: 
+;
+;  sign byte | byte 0 fractional part | byte 1 fractional part | byte 2 fractional part | one byte integer part
+;
+; examples:
+; 
+; +1.5  = 1 + 1/2       = $00, $00, $00, $80, $01
+; -2.25 = 2 + 1/4       = $01, $00, $00, $40, $02
+; +3.75 = 3 + 1/2 + 1/4 = $00, $00, $00, $C0, $03
+; -0.001953125 = 1/512  = $01, $00, $80, $00, $00
+;
+; The values are interpreted as a fixed point decimal number but most of the routines can also 
+; be used if the bytes are simply interpreted as 32 bit integers with a prepended sign byte.
+; --------------------------------------------------
+
+
+; --------------------------------------------------
+; This subroutine expects it operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT
+; and adds them. This routine ignores the sign byte.
+;
+; The result is returned in the second operand, i.e. *opR <- *opL + *opR 
+; --------------------------------------------------
+add32BitUnsigned
+    ldy #1                         ; skip over sign byte
+    clc
+    lda (ADDR_OPER_LEFT),y
+    adc (ADDR_OPER_RIGHT),y
+    sta (ADDR_OPER_RIGHT),y
+    iny
+    lda (ADDR_OPER_LEFT),y
+    adc (ADDR_OPER_RIGHT),y
+    sta (ADDR_OPER_RIGHT),y    
+    iny
+    lda (ADDR_OPER_LEFT),y
+    adc (ADDR_OPER_RIGHT),y
+    sta (ADDR_OPER_RIGHT),y    
+    iny
+    lda (ADDR_OPER_LEFT),y
+    adc (ADDR_OPER_RIGHT),y
+    sta (ADDR_OPER_RIGHT),y    
+
+    rts
+
+; --------------------------------------------------
+; This subroutine expects its operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT
+; and subtracts them. The caller has to ensure that *opL >= *opR
+;
+; The result is returned in the second operand, i.e. *opR <- *opL - *opR 
+; --------------------------------------------------
+sub32BitUnsigned
+    ldy #1                         ; skip over sign byte
+    sec
+    lda (ADDR_OPER_LEFT),y
+    sbc (ADDR_OPER_RIGHT),y
+    sta (ADDR_OPER_RIGHT),y
+    iny
+    lda (ADDR_OPER_LEFT),y
+    sbc (ADDR_OPER_RIGHT),y
+    sta (ADDR_OPER_RIGHT),y    
+    iny
+    lda (ADDR_OPER_LEFT),y
+    sbc (ADDR_OPER_RIGHT),y
+    sta (ADDR_OPER_RIGHT),y    
+    iny
+    lda (ADDR_OPER_LEFT),y
+    sbc (ADDR_OPER_RIGHT),y
+    sta (ADDR_OPER_RIGHT),y    
+    rts
+
+; --------------------------------------------------
+; This subroutine expects its operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT
+; and subtracts them. The caller has to ensure that *opR >= *opL. This routine ignores the sign bytes.
+;
+; The result is returned in the second operand, i.e. *opR <- *opR - *opL 
+; --------------------------------------------------
+sub32SwitchedUnsigned
+    ldy #1                         ; skip over sign byte
+    sec
+    lda (ADDR_OPER_RIGHT),y
+    sbc (ADDR_OPER_LEFT),y
+    sta (ADDR_OPER_RIGHT),y
+    iny
+    lda (ADDR_OPER_RIGHT),y
+    sbc (ADDR_OPER_LEFT),y
+    sta (ADDR_OPER_RIGHT),y
+    iny
+    lda (ADDR_OPER_RIGHT),y
+    sbc (ADDR_OPER_LEFT),y
+    sta (ADDR_OPER_RIGHT),y
+    iny
+    lda (ADDR_OPER_RIGHT),y
+    sbc (ADDR_OPER_LEFT),y
+    sta (ADDR_OPER_RIGHT),y
+    rts
+
+
+; --------------------------------------------------
+; This subroutine expects its operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT
+; It multiplies its operands as if they were unsigned 32 bit integers. The algorithm used is the
+; basic algorithm taught at school for manual multiplication with the difference that the "digits" 
+; are bytes and we have access to a multiplication table for the multiplication of two single "digit"
+; numbers. The multiplication result is an 8 byte value that is stored in the (zero page) location 
+; TEMP_MUL-TEMP_MUL+7.
+;
+; The result is returned in the eight byte buffer starting at TEMP_MUL.
+; --------------------------------------------------
+mul32BitUnsigned
+    lda #0
+    sta COUNT_L                   ; clear counter for digits of left operand
+    sta COUNT_R                   ; clear counter for digits of right operand
+    ldx #7                        ; clear temp buffer
+    lda #0
+.clear                            
+    sta TEMP_MUL,X
+    dex
+    bpl .clear
+
+.loopMul
+    ldy COUNT_L
+    iny                           ; skip sign byte
+    lda (ADDR_OPER_LEFT), y       ; load COUNT_L digit of left operand 
+    tax                           ; and store it in X register
+    ldy COUNT_R                   ; load COUNT_R digit of right operand in accu
+    iny                           ; skip sign byte
+    lda (ADDR_OPER_RIGHT), y
+    jsr mul16Bit                  ; multiply these 8 bit values. Result MSB in accu, LSB in x register
+    sta HELP_MUL                  ; store MSB of multiplication result in temp variable
+    lda COUNT_L                   ; calculate index of positon where to add the 16 bit result
+    clc
+    adc COUNT_R                   ; This position is COUNT_L + COUNT_R
+    tay                           ; move calculated index to y register
+    txa                           ; move LSB of multiplication result to accu
+    clc    
+    adc TEMP_MUL, y               ; add LSB to intermediate result
+    sta TEMP_MUL, y
+    iny
+    lda HELP_MUL                  ; add MSB to intermediate result
+    adc TEMP_MUL, y
+    sta TEMP_MUL, y
+    php                           ; save status register (mostly the carry bit)
+    iny
+    ; this comparison destroys the current value of the carry
+    cpy #8                        
+    beq .skipIfAtEnd              ; we are beyond the final byte. In this case ignore carry
+    plp                           ; restore flag register, restore original carry bit
+    lda #0                        ; add carry to intermediate result
+    adc TEMP_MUL, y
+    sta TEMP_MUL, y
+    php                           ; push flag register so that we can pull it in the next instruction
+.skipIfAtEnd
+    plp                           ; pull flag register (either pushed before or before comparison)
+    inc COUNT_L                   ; Move processing to next digit of left operand
+    lda COUNT_L
+    cmp #4
+    bne .loopMul
+    lda #0                        ; Move processing to next digit of right operand
+    sta COUNT_L
+    inc COUNT_R
+    lda COUNT_R
+    cmp #4
+    bne .loopMul
+
+    rts
+
+
+; --------------------------------------------------
+; This subroutine expects its operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT
+; and multplies them. This routine ignores the sign bytes.
+;
+; It also normalizes the result as a fixed point value of the correct format of 8 bits before
+; the comma and 24 after the comma. The result is returned in ADDR_OPER_RIGHT.
+; --------------------------------------------------
+mul32BitNormalizedUnsigned
+    jsr mul32BitUnsigned
+
+    ; copy bytes 3,4,5,6 from TEMP_MUL
+    ; to bytes 1,2,3,4 of (ARITH_SCRATCH7)
+    ldy #1
+.loopNorm
+    lda TEMP_MUL+2, y
+    sta (ADDR_OPER_RIGHT), y
+    iny
+    cpy #5
+    bne .loopNorm
+
+    rts
+
+; --------------------------------------------------
+; This subroutine expects its operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT
+; and multplies them. This routine ignores the sign bytes.
+;
+; It also normalizes the result as a 32 bit unsigned integer, i.e. it only looks at the four least
+; significant bytes of the full 64 bit multiplication result. The result is returned in ADDR_OPER_RIGHT.
+; --------------------------------------------------
+mul32BitUnsignedInt
+    jsr mul32BitUnsigned
+
+    ; copy bytes 0,1,2,3 from TEMP_MUL
+    ; to bytes 1,2,3,4 of (ADDR_OPER_RIGHT)
+    ldy #1
+.loopNormInt
+    lda TEMP_MUL-1, y
+    sta (ADDR_OPER_RIGHT), y
+    iny
+    cpy #5
+    bne .loopNormInt
+
+    rts
+
+
+SQUARE_BUFFER_LSB
+!byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+
+SQUARE_BUFFER_MSB
+!byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+
+
+; --------------------------------------------------
+; This subroutine expects its operand in the zero page pointer ADDR_OPER_LEFT and squares it.
+; It attempts to optimize this operation by using the table of squares instead of the 
+; multiplication table in banked RAM where this is possible and by reusing
+; previously calculated partial results.
+;
+; The result is returned in the eight byte buffer starting at TEMP_MUL.
+; --------------------------------------------------
+square32BitUnsigned
+    ; clear looping variables
+    stz COUNT_L
+    stz COUNT_R  
+    ; clear temp buffer
+    ldx #7                        
+    lda #0
+.clearSquare                            
+    sta TEMP_MUL,X
+    dex
+    bpl .clearSquare
+
+.loopSquare
+    lda COUNT_L
+    cmp COUNT_R
+    beq .squareOnly               ; When looping variables are equal we have to square an 8 bit "digit"
+    bcc .transpose                ; When COUNT_L is less than COUNT_R we have already calculated that result
+    bra .normal                   ; no special case we have to do a normal 8 by 8 bit multiplication
+.squareOnly
+    ; squaring is faster than 16 bit multiplication
+    tay                           ; accu holds COUNT_L
+    iny                           ; skip sign byte
+    lda (ADDR_OPER_LEFT), y       ; load COUNT_L digit of left operand 
+    tay
+    lda SQ_TAB_LSB, y              
+    tax                           ; lo byte in x
+    lda SQ_TAB_MSB, y             ; hi byte in accu
+    bra .processResult
+.transpose        
+    ; retrieve previously calculated result
+    lda COUNT_R                   ; calculate buffer address
+    asl
+    asl
+    ora COUNT_L                   ; offset into buffer is COUNT_R | COUNT_L, i.e. transposed wrt write operation
+    tay    
+    lda SQUARE_BUFFER_LSB, y      ; load lo byte
+    tax
+    lda SQUARE_BUFFER_MSB, y      ; load hi byte
+    bra .processResult
+.normal
+    ldy COUNT_L
+    iny                           ; skip sign byte
+    lda (ADDR_OPER_LEFT), y       ; load COUNT_L digit of left operand 
+    tax                           ; and store it in X register
+    ldy COUNT_R                   ; load COUNT_R digit of right operand in accu
+    iny                           ; skip sign byte
+    lda (ADDR_OPER_LEFT), y
+    jsr mul16Bit                  ; multiply these 8 bit values. Result MSB in accu, LSB in x register
+    pha                           ; save accu, x must not be changed
+    ; calculate buffer address
+    ; and store partial result for reuse
+    lda COUNT_L  
+    asl
+    asl
+    ora COUNT_R                   ; offset into buffer is COUNT_L | COUNT_R
+    tay
+    txa
+    sta SQUARE_BUFFER_LSB, y      ; store lo byte in buffer 
+    pla                           ; restore accu
+    sta SQUARE_BUFFER_MSB, y      ; store hi byte in buffer
+.processResult
+    sta HELP_MUL                  ; store MSB of multiplication result in temp variable
+    lda COUNT_L                   ; calculate index of positon where to add the 16 bit result
+    clc
+    adc COUNT_R                   ; This position is COUNT_L + COUNT_R
+    tay                           ; move calculated index to y register
+    txa                           ; move LSB of multiplication result to accu
+    clc    
+    adc TEMP_MUL, y               ; add LSB to intermediate result
+    sta TEMP_MUL, y
+    iny
+    lda HELP_MUL                  ; add MSB to intermediate result
+    adc TEMP_MUL, y
+    sta TEMP_MUL, y
+    php                           ; save status register (mostly the carry bit)
+    iny
+    ; this comparison destroys the current value of the carry
+    cpy #8                        
+    beq .skipIfAtEndSquare        ; we are beyond the final byte. In this case ignore carry
+    plp                           ; restore flag register, restore original carry bit
+    lda #0                        ; add carry to intermediate result
+    adc TEMP_MUL, y
+    sta TEMP_MUL, y
+    php                           ; push flag register so that we can pull it in the next instruction
+.skipIfAtEndSquare
+    plp                           ; pull flag register (either pushed before or before comparison)
+    inc COUNT_L                   ; Move processing to next digit of left operand
+    lda COUNT_L
+    cmp #4
+    bne .loopSquare
+    lda #0                        ; Move processing to next digit of right operand
+    sta COUNT_L
+    inc COUNT_R
+    lda COUNT_R
+    cmp #4
+    beq .squareEnd
+    jmp .loopSquare
+.squareEnd
+    rts    
+
+; --------------------------------------------------
+; This subroutine expects its operand in the zero page pointer ADDR_OPER_LEFT and squares it.
+; and multplies them. This routine ignores the sign bytes.
+;
+; It also and normalizes the result as a fixed point value of the correct format of 8 bits before
+; the comma and 24 after the comma. The result is returned in ADDR_OPER_LEFT.
+; --------------------------------------------------
+square32BitNormalizedUnsigned
+    jsr square32BitUnsigned
+
+    ; copy bytes 3,4,5,6 from TEMP_MUL
+    ; to bytes 1,2,3,4 of (ADDR_OPER_LEFT)
+    ldy #1
+.loopNormSquare
+    lda TEMP_MUL+2, y
+    sta (ADDR_OPER_LEFT), y
+    iny
+    cpy #5
+    bne .loopNormSquare
+
+    rts
+
+
+; --------------------------------------------------
+; This subroutine expects its operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT
+; and compares them. This routine ignores the sign byte it only compares the absolute values.
+;
+; The result is returned in the carry flag. Its is set if *opL >= *opR. In addition the the zero flag is set
+; when the values are equal.
+; --------------------------------------------------
+cmp32BitUnsigned
+    ldy #4                       ; start at MSB
+    lda (ADDR_OPER_LEFT), y
+    cmp (ADDR_OPER_RIGHT), y
+    beq .next1                   ; continue if equal
+    rts                          ; carry contains result                   
+.next1
+    dey
+    lda (ADDR_OPER_LEFT), y
+    cmp (ADDR_OPER_RIGHT), y
+    beq .next2                   ; continue if equal
+    rts                          ; carry contains result
+.next2
+    dey
+    lda (ADDR_OPER_LEFT), y
+    cmp (ADDR_OPER_RIGHT), y
+    beq .next3                   ; continue if equal
+    rts                          ; carry contains result
+.next3                           ; We get here only if all bytes before were equal
+    dey
+    lda (ADDR_OPER_LEFT), y
+    cmp (ADDR_OPER_RIGHT), y     ; carry contains result even if values are equal
+.endCmp
+    rts
+
+
+; --------------------------------------------------
+; This subroutine expects its operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT
+; and checks if they are equal. This routine takes the sign into account, i.e. +0 und -0 are considered
+; to be equal. The special case where Null can have a positive or negative sign byte requires separate
+; logic in the code below.
+;
+; The result is returned in the zero flag. Its is set if *opL == *opR. 
+; --------------------------------------------------
+isEqual32Bit
+    jsr cmp32BitUnsigned
+    bne .equalDone                ; absolute values are different => numbers are unequal, zero flag is already cleared
+    ; numbers are equal in their absolute value
+    ; Check if all bytes are zero, i.e. check if both operands are zero 
+    ldy #4                        ; count from 4 to 1, ignore sign byte
+.checkNextByte
+    lda (ADDR_OPER_LEFT), y
+    bne .notZero                  ; There is at least one non zero byte, therefore the values are equal if the signs are equal
+    dey
+    bne .checkNextByte
+    bra .equalDone                ; absolute values are equal and all bytes are zero => ignore sign and zero flag is already set
+.notZero
+    ; Absolute values of operands are equal and they are nonzero => check sign bytes
+    ldy #0
+    lda (ADDR_OPER_LEFT), y
+    eor (ADDR_OPER_RIGHT), y      ; zero flag is set if the signs are equal as in that case the XOR result is zero
+.equalDone
+    rts
+
+
+; --------------------------------------------------
+; This subroutine expects its operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT.
+; It copies the value of *oL to *oR.
+;
+; The result is returned in the second operand, i.e. *opR <- *opL 
+; --------------------------------------------------
+move32Bit
+    ldy #4
+.loopMove
+    lda (ADDR_OPER_LEFT),y
+    sta (ADDR_OPER_RIGHT),y
+    dey
+    bpl .loopMove
+
+    rts
+
+
+; --------------------------------------------------
+; This subroutine expects its operand in the zero page pointer ADDR_OPER_LEFT and
+; doubles that value by simply performing a left shift.
+;
+; The operand is modified, i.e. *op <- 2 * *op 
+; --------------------------------------------------
+double32Bit
+    ldy #1                        ; skip sign value
+    lda (ADDR_OPER_LEFT),y
+    asl
+    sta (ADDR_OPER_LEFT),y
+
+    iny
+    lda (ADDR_OPER_LEFT),y
+    rol
+    sta (ADDR_OPER_LEFT),y
+
+    iny
+    lda (ADDR_OPER_LEFT),y
+    rol
+    sta (ADDR_OPER_LEFT),y
+
+    iny
+    lda (ADDR_OPER_LEFT),y
+    rol
+    sta (ADDR_OPER_LEFT),y
+
+    rts
+
+
+; --------------------------------------------------
+; This subroutine expects its operand in the zero page pointer ADDR_OPER_LEFT and
+; then halves that value by simply performing a right shift.
+;
+; The operand is modified, i.e. *op <- *op / 2 
+; --------------------------------------------------
+halve32Bit
+    clc
+    ldy #4 
+    lda (ADDR_OPER_LEFT),y                       
+    ror 
+    sta (ADDR_OPER_LEFT),y
+    dey
+
+    lda (ADDR_OPER_LEFT),y                       
+    ror 
+    sta (ADDR_OPER_LEFT),y
+    dey
+
+    lda (ADDR_OPER_LEFT),y                       
+    ror 
+    sta (ADDR_OPER_LEFT),y
+    dey
+
+    lda (ADDR_OPER_LEFT),y                       
+    ror 
+    sta (ADDR_OPER_LEFT),y
+
+    rts
+
+LEFT_GREATER_EQUAL_RIGHT
+!byte 0
+
+!macro prepareAddSub {
+    lda #0
+    sta LEFT_GREATER_EQUAL_RIGHT
+    jsr cmp32BitUnsigned
+    bcc .leftLessThanRight
+    inc LEFT_GREATER_EQUAL_RIGHT
+.leftLessThanRight
+}
+
+; --------------------------------------------------
+; This subroutine expects its operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT and
+; adds them while handling their signs correctly.
+;
+; The result is returned in the second operand, i.e. *opR <- *opL + *opR 
+; --------------------------------------------------
+add32Bit
+    +prepareAddSub
+    ldy #0
+    lda (ADDR_OPER_LEFT), y
+    eor (ADDR_OPER_RIGHT), y
+    beq .simpleAdd                         ; signs are equal => simply add values
+    lda LEFT_GREATER_EQUAL_RIGHT
+    bne .normalSub
+    ; switched subtraction
+    ; sign of result is sign of opR
+    ; result is opR
+    jsr sub32SwitchedUnsigned
+    rts
+.normalSub
+    ; normal subtraction
+    ; sign of result is sign of opL
+    ; result is OpR
+    lda (ADDR_OPER_LEFT), y                ; set sign of result   
+    sta (ADDR_OPER_RIGHT), y
+    jsr sub32BitUnsigned
+    rts
+.simpleAdd
+    ; addition
+    ; sign of both operands is equal
+    ; sign does not change
+    jsr add32BitUnsigned
+    rts
+
+
+; --------------------------------------------------
+; This subroutine expects its operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT and
+; subtracts them while handling their signs correctly.
+;
+; The result is returned in the second operand, i.e. *opR <- *opL - *opR 
+; --------------------------------------------------
+sub32Bit
+    +prepareAddSub
+    ldy #0
+    lda (ADDR_OPER_LEFT), y
+    eor (ADDR_OPER_RIGHT), y
+    bne .simpleAdd2                       ; signs are different
+    lda LEFT_GREATER_EQUAL_RIGHT
+    bne .normalSub2
+    ; switched subtraction
+    ; sign of result is flipped
+    ; result is opR
+    lda (ADDR_OPER_RIGHT), y               ; set sign of result
+    eor #1
+    sta (ADDR_OPER_RIGHT), y
+    jsr sub32SwitchedUnsigned
+    rts
+.normalSub2
+    ; normal subtraction
+    ; sign of result is unchanged
+    ; result is opR
+    jsr sub32BitUnsigned
+    rts
+.simpleAdd2
+    ; add both operands
+    ; sign of result is sign of opL
+    ; result is opR
+    lda (ADDR_OPER_LEFT), y               ; set sign of result
+    sta (ADDR_OPER_RIGHT), y
+    jsr add32BitUnsigned
+    rts
+
+; --------------------------------------------------
+; This subroutine expects its operand in the zero page pointer ADDR_OPER_LEFT and
+; and negates that value.
+;
+; The operand is modified, i.e. *op <- -*op 
+; --------------------------------------------------
+neg32
+    ldy #0
+    lda (ADDR_OPER_LEFT), y
+    eor #1
+    sta (ADDR_OPER_LEFT), y
+    rts
+
+; --------------------------------------------------
+; This subroutine expects its operands in the zero page pointers ADDR_OPER_LEFT and ADDR_OPER_RIGHT
+; and multiplies these values while handling their signs correctly.
+;
+; The result is returned in the second operand, i.e. *opR <- *opL * *opR 
+; --------------------------------------------------
+mul32BitNormalized
+    ; The sign of the result is - if the signs of the two operands are different
+    ; and + otherwise. I.e. the result sign bit is the XOR of the two original sign bits
+    ldy #0
+    lda (ADDR_OPER_LEFT),y                ; set sign of result
+    eor (ADDR_OPER_RIGHT),y
+    sta (ADDR_OPER_RIGHT),y
+    jsr mul32BitNormalizedUnsigned
+    rts
+
+; --------------------------------------------------
+; This subroutine expects its operand in the zero page pointer ADDR_OPER_LEFT and
+; and squares that value. The result is always positive.
+;
+; The operand is modified *op <- *op * *opR 
+; --------------------------------------------------
+square32BitNormalized
+    ; The sign of the result is always +
+    ldy #0
+    lda #0
+    sta (ADDR_OPER_LEFT),y                ; set sign of result
+    jsr square32BitNormalizedUnsigned
+    rts
+
+
+!macro callFunc .func, .addrL, .addrR {
+    +load16BitImmediate .addrL, ADDR_OPER_LEFT
+    +load16BitImmediate .addrR, ADDR_OPER_RIGHT
+    jsr .func
+}
+
+!macro callFuncMono .func, .addrL {
+    +load16BitImmediate .addrL, ADDR_OPER_LEFT
+    jsr .func
+}
+
