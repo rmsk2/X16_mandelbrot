@@ -312,9 +312,9 @@ progStart
     jsr initArithmetic
     
     ;jsr bitMapOn
-    jsr drawZoomRect
-    jsr waitForKey
-    jsr drawZoomRect
+    ;jsr drawZoomRect
+    ;jsr waitForKey
+    ;jsr drawZoomRect
 
     jsr bitMapOn
     jsr mandelLoop

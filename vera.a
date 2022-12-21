@@ -53,13 +53,25 @@ bitMapOff
     jsr CINT
     rts
 
-ZOOM_DIFF
-!byte 0
+!macro autoIncOn {
+    lda VERA + 2
+    ora #16
+    sta VERA + 2
+}
+
+!macro autoIncOff {
+    lda VERA + 2
+    and #%11101111
+    sta VERA + 2
+}
 
 REV_X
 !byte 0, 0
 REV_Y
 !byte 0
+
+CONST_320
+!byte 0, <RES_X, >RES_X, 0, 0
 
 TEMP_32_X
 !byte 0, 0, 0, 0, 0
@@ -67,33 +79,84 @@ TEMP_32_X
 TEMP_32_Y
 !byte 0, 0, 0, 0, 0
 
-reversePixel
+; --------------------------------------------------
+
+calcVRAMAddress
     ; calculate Video RAM address
     +callFuncMono clear32Bit, TEMP_32_X
     +callFuncMono clear32Bit, TEMP_32_Y
     lda REV_Y
     sta TEMP_32_Y + 1
     +move16Bit REV_X, TEMP_32_X + 1
-    +callFunc mul32BitUnsignedInt, TEMP_32_Y, TEMP_32_X
-    +printFixedPoint TEMP_32_X
+    +callFunc mul32BitUnsignedInt, CONST_320, TEMP_32_Y
+    +callFunc add32BitUnsigned, TEMP_32_Y, TEMP_32_X
+
+    rts
+
+; --------------------------------------------------
+
+reverseHLine
+    +move16Bit ZOOM_X_POS, REV_X
+    lda ZOOM_Y_POS
+    sta REV_Y
+    jsr calcVRAMAddress
+
+    lda TEMP_32_X + 1
+    sta VERA
+    lda TEMP_32_X + 2
+    sta VERA + 1
+    lda TEMP_32_X + 3
+    sta VERA + 2 
 
     ; select data port 0
     lda #%11111110
     and VERA_CTRL
-    sta VERA_CTRL        
+    sta VERA_CTRL 
 
-    ; copy video RAM addresses
-    lda TEMP_32_X
-    sta VERA
+.loopLineX
+    lda VERA_DATA_0
+    eor #$FF
+    tax
+    +autoIncOn
+    txa
+    sta VERA_DATA_0
+    +autoIncOff
+    +inc16Bit REV_X
+    +cmp16BitImmediate RES_X, REV_X
+    bne .loopLineX
+
+    rts
+
+; --------------------------------------------------
+
+reverseVLine
+    +move16Bit ZOOM_X_POS, REV_X
+    lda ZOOM_Y_POS
+    sta REV_Y
+    jsr calcVRAMAddress
+
+    +autoIncOff
+.loopLineY
     lda TEMP_32_X + 1
-    sta VERA + 1
+    sta VERA
     lda TEMP_32_X + 2
-    sta VERA + 2                       ; also set increment to 0 and no decrement
-    ; modify video RAM
+    sta VERA + 1
+    lda TEMP_32_X + 3
+    sta VERA + 2 
+
     lda VERA_DATA_0
     eor #$FF
     sta VERA_DATA_0
 
+    inc REV_Y
+    lda REV_Y
+    cmp #RES_Y
+    beq .doneVline
+
+    +callFunc add32BitUnsigned, CONST_320, TEMP_32_X
+    bra .loopLineY 
+
+.doneVline
     rts
 
 ZOOM_X_SIZE
@@ -102,9 +165,9 @@ ZOOM_Y_SIZE
 !byte 240
 
 ZOOM_X_POS
-!byte 0,0
+!byte 0, 0
 ZOOM_Y_POS
-!byte 0
+!byte 120
 ; --------------------------------------------------
 ; This routine draws a rectangle on the bitmap screen which symbolizes the
 ; zoom level.
@@ -112,16 +175,6 @@ ZOOM_Y_POS
 ; drawZoomRect has no return value
 ; --------------------------------------------------
 drawZoomRect
-    +move16Bit ZOOM_X_POS, REV_X
-    lda ZOOM_Y_POS
-    sta REV_Y
-.loopZoomX
-    jsr reversePixel
-    +inc16Bit REV_X
-    +cmp16BitImmediate RES_X, REV_X
-;    php
-;    +printByteLN REV_X
-;    plp
-    bne .loopZoomX
+    jsr reverseVLine
 
     rts
