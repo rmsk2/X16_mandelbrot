@@ -8,6 +8,7 @@
 
 RES_X = 320
 RES_Y = 240
+MAX_ZOOM_LEVEL = 17
 
 ENTRY_POINT
 jmp progStart
@@ -37,7 +38,7 @@ NUM_ITER
 !byte 0
 
 ; **************************************************
-; The following 4 values have to be contiguously laid out
+; The following 5 values have to be contiguously laid out
 ; in memory. The load and save routines expect this.
 
 ; x offset to move in complex plane for next point
@@ -55,6 +56,9 @@ INIT_REAL
 ; imaginary part of upper left point of picture
 INIT_IMAG
 !byte 0, 0, 0, $25, 1
+
+ZOOM_LEVEL
+!byte 0
 ; **************************************************
 
 ; Number of points (resolution) in x direction
@@ -306,6 +310,12 @@ mandelLoop
 ; --------------------------------------------------
 progStart
     jsr initArithmetic
+    
+    ;jsr bitMapOn
+    jsr drawZoomRect
+    jsr waitForKey
+    jsr drawZoomRect
+
     jsr bitMapOn
     jsr mandelLoop
     lda .INTERRUPTED

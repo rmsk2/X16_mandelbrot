@@ -144,7 +144,7 @@ USE_MUL_TABLE = 1
 ; the immediate value given in .value.
 ; 
 ; Z  flag is set in case these values are equal. Carry is set
-; if .value is greater or equal than the value store at .memAddr
+; if .value is greater or equal than the value stored at .memAddr
 ; --------------------------------------------------
 !macro cmp16BitImmediate .value, .memAddr {
     lda #>.value

@@ -9,7 +9,8 @@ resetParametersHires
     +callFunc move32Bit, DEFAULT_STEP_X, STEP_X
     +callFunc move32Bit, DEFAULT_STEP_Y, STEP_Y 
     +callFunc move32Bit, DEFAULT_INIT_REAL, INIT_REAL
-    +callFunc move32Bit, DEFAULT_INIT_IMAG, INIT_IMAG       
+    +callFunc move32Bit, DEFAULT_INIT_IMAG, INIT_IMAG
+    stz ZOOM_LEVEL       
     rts
 
 ; --------------------------------------------------
@@ -19,8 +20,13 @@ resetParametersHires
 ; increaseZoomLevel has no return value. 
 ; --------------------------------------------------
 increaseZoomLevel
+    lda ZOOM_LEVEL
+    cmp #MAX_ZOOM_LEVEL
+    bcs .zoomDone
+    inc ZOOM_LEVEL
     +callFuncMono halve32Bit, STEP_X
     +callFuncMono halve32Bit, STEP_Y
+.zoomDone
     rts
 
 .TEMP_X
