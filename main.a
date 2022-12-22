@@ -330,6 +330,15 @@ mandelLoop
 !byte 18
 !tx "ITERATION DEPTH: $"
 
+.TXT_STEPPING_X
+!byte 18
+!tx "STEP X         : $"
+
+.TXT_STEPPING_Y
+!byte 18
+!tx "STEP Y         : $"
+
+
 ; --------------------------------------------------
 ; This routine performs all neccessary steps for selecting
 ; a new upper left corner in the set and a new stepping width 
@@ -369,6 +378,10 @@ mandelLoop
     +printByteLN ZOOM_LEVEL
     +printStr .TXT_ITERATION_DEPTH
     +printByteLN MAX_ITER
+    +printStr .TXT_STEPPING_X
+    +printFixedPoint STEP_X
+    +printStr .TXT_STEPPING_Y
+    +printFixedPoint STEP_Y
 
     rts
 
