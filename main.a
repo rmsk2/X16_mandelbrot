@@ -310,7 +310,8 @@ mandelLoop
 !ifndef TESTS {
 
 .TXT_VALUES
-!byte 56
+!byte 57
+!byte 13
 !tx "THE FOLLOWING VALUES WERE USED IN THE LAST CALCULATION"
 !byte 13, 13
 
