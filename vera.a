@@ -4,6 +4,58 @@ VERA_DATA_0 = $9F23
 CINT = $FF81
 screen_mode = $FF5F
 
+; Keys used in zooming
+CURSOR_UP = $91
+CURSOR_DOWN = $11
+CURSOR_RIGHT = $1D
+CURSOR_LEFT = $9d
+KEY_RETURN = $0d
+ZOOM_IN = $85
+ZOOM_OUT = $86
+
+; --------------------------------------------------
+; This macro generates code for tuning on the auto increment
+; functionality for VRAM access.
+; --------------------------------------------------
+!macro autoIncOn {
+    lda VERA + 2
+    ora #16
+    sta VERA + 2
+}
+
+; --------------------------------------------------
+; This macro generates code for turning off the auto increment
+; functionality for VRAM access.
+; --------------------------------------------------
+!macro autoIncOff {
+    lda VERA + 2
+    and #%11101111
+    sta VERA + 2
+}
+
+; --------------------------------------------------
+; This macro generates code for selectin the VRAM address to
+; which is used for the next read or write operaton in video RAM
+; --------------------------------------------------
+!macro setVeraRegisters .addr {
+    lda .addr
+    sta VERA
+    lda .addr + 1
+    sta VERA + 1
+    lda .addr + 2
+    sta VERA + 2 
+}
+
+; --------------------------------------------------
+; This macro generates code for selecting the data port 0 of the
+; Vera chip
+; --------------------------------------------------
+!macro selectDataPort0 {
+    lda #%11111110
+    and VERA_CTRL
+    sta VERA_CTRL     
+}
+
 ; --------------------------------------------------
 ; This routine set the next point in a colour defined by 
 ; NUM_ITER.
@@ -33,16 +85,15 @@ bitMapOn
     clc
     jsr screen_mode      
     bcs .endErrInit      ; carry is set on error
-    lda #%11111110
-    and VERA_CTRL
-    sta VERA_CTRL        ; select data port 0
+    +selectDataPort0
     lda #0
     sta VERA             
-    sta VERA+1
-    lda #16              ; set increment to 1 and set most significant bit of VRAM address to 0
-    sta VERA+2           ; VRAM address is set to 0 with a one byte increment
+    sta VERA + 1
+    sta VERA + 2
+    +autoIncOn
 .endErrInit
     rts
+
 
 ; --------------------------------------------------
 ; This routine restores the text screen
@@ -53,65 +104,81 @@ bitMapOff
     jsr CINT
     rts
 
-!macro autoIncOn {
-    lda VERA + 2
-    ora #16
-    sta VERA + 2
-}
 
-!macro autoIncOff {
-    lda VERA + 2
-    and #%11101111
-    sta VERA + 2
-}
-
-REV_X
-!byte 0, 0
-REV_Y
-!byte 0
-
-CONST_320
+.CONST_X_RES
 !byte 0, <RES_X, >RES_X, 0, 0
 
-TEMP_32_X
+.VRAM_32Bit
+!byte 0                                        ; sign byte
+.VRAM                                          ; values bytes
+!byte 0, 0, 0, 0
+
+.TEMP_32_Y
 !byte 0, 0, 0, 0, 0
 
-TEMP_32_Y
-!byte 0, 0, 0, 0, 0
+.PIXEL_X
+!byte 0, 0
+.PIXEL_Y
+!byte 0
 
 ; --------------------------------------------------
-
+; This routine calculates the VRAM address of the pixel given in .PIXEL_X and
+; .PIXEL_Y. 
+;
+; It returns the calculation result in the three bytes starting at address .VRAM
+; --------------------------------------------------
 calcVRAMAddress
-    ; calculate Video RAM address
-    +callFuncMono clear32Bit, TEMP_32_X
-    +callFuncMono clear32Bit, TEMP_32_Y
-    lda REV_Y
-    sta TEMP_32_Y + 1
-    +move16Bit REV_X, TEMP_32_X + 1
-    +callFunc mul32BitUnsignedInt, CONST_320, TEMP_32_Y
-    +callFunc add32BitUnsigned, TEMP_32_Y, TEMP_32_X
+    +callFuncMono clear32Bit, .VRAM_32Bit
+    +callFuncMono clear32Bit, .TEMP_32_Y
+    lda .PIXEL_Y
+    sta .TEMP_32_Y + 1
+    +move16Bit .PIXEL_X, .VRAM
+    +callFunc mul32BitUnsignedInt, .CONST_X_RES, .TEMP_32_Y
+    +callFunc add32BitUnsigned, .TEMP_32_Y, .VRAM_32Bit
 
     rts
 
-; --------------------------------------------------
+.H_START_X
+!byte 0, 0
+.H_START_Y
+!byte 0
+.H_LEN
+!byte 0, 0
 
+.H_END_X
+!byte 0, 0
+
+.exitHline
+    jmp .hLineDone
+; --------------------------------------------------
+; This routine draws a horizontal line on the bitmap screen by reversing the color
+; of all pixels on the line. The starting position is given .H_STARTX and .H_START_Y.
+; The length is specified by .H_LEN. Precondition: .H_START_X < RES_X.
+;
+; The routine has no return value.
+; --------------------------------------------------
 reverseHLine
-    +move16Bit ZOOM_X_POS, REV_X
-    lda ZOOM_Y_POS
-    sta REV_Y
+    ; clip screen coordinates
+    lda .H_START_Y
+    cmp #RES_Y
+    bcs .exitHline                                   ; Y-Coordinate too big  => do nothing
+   
+    +move16Bit .H_START_X, .H_END_X
+    +add16Bit .H_LEN, .H_END_X                       ; calculate end X-coordinate
+    +cmp16BitImmediate RES_X, .H_END_X               
+    beq .beginHDraw                                  ; RES_X == .H_END_X => Begin to draw
+    bcc .clipX                                       ; RES_X < .H_END_X => Clip to RES_X
+    bra .beginHDraw                                  ; RES_X > .H_END_X => Begin to draw
+.clipX
+    +load16BitImmediate RES_X, .H_END_X
+
+.beginHDraw
+    +move16Bit .H_START_X, .PIXEL_X
+    lda .H_START_Y
+    sta .PIXEL_Y
     jsr calcVRAMAddress
 
-    lda TEMP_32_X + 1
-    sta VERA
-    lda TEMP_32_X + 2
-    sta VERA + 1
-    lda TEMP_32_X + 3
-    sta VERA + 2 
-
-    ; select data port 0
-    lda #%11111110
-    and VERA_CTRL
-    sta VERA_CTRL 
+    +setVeraRegisters .VRAM
 
 .loopLineX
     lda VERA_DATA_0
@@ -121,60 +188,272 @@ reverseHLine
     txa
     sta VERA_DATA_0
     +autoIncOff
-    +inc16Bit REV_X
-    +cmp16BitImmediate RES_X, REV_X
+
+    +inc16Bit .H_START_X
+    +cmp16Bit .H_END_X, .H_START_X
     bne .loopLineX
 
+.hLineDone
     rts
 
-; --------------------------------------------------
 
+.V_START_X
+!byte 0, 0
+.V_START_Y
+!byte 0
+.V_LEN
+!byte 0, 0
+
+.V_END_Y
+!byte 0, 0
+
+.exitVline
+    jmp .doneVline
+; --------------------------------------------------
+; This routine draws a vertical line on the bitmap screen by reversing the color
+; of all pixels on the line. The starting position is given .V_STARTX and .V_START_Y.
+; The length is specified by .V_LEN. Precondition: .V_START_Y < RES_Y.
+;
+; The routine has no return value.
+; --------------------------------------------------
 reverseVLine
-    +move16Bit ZOOM_X_POS, REV_X
-    lda ZOOM_Y_POS
-    sta REV_Y
+    ; clip X coordinate
+    +cmp16BitImmediate RES_X, .V_START_X
+    beq .exitVline
+    bcc .exitVline
+    ; Here we can be sure that .V_START_X < RES_X
+    ; Now clip Y coordinate of end point
+    +load16BitImmediate 0, .V_END_Y
+    lda .V_START_Y
+    sta .V_END_Y
+    +add16Bit .V_LEN, .V_END_Y
+    +cmp16BitImmediate RES_Y, .V_END_Y
+    beq .beginVDraw
+    bcc .clipY
+    bra .beginVDraw
+.clipY    
+    ; Y end position is RES_Y
+    lda #RES_Y
+    sta .V_END_Y
+
+.beginVDraw
+    +move16Bit .V_START_X, .PIXEL_X
+    lda .V_START_Y
+    sta .PIXEL_Y
     jsr calcVRAMAddress
 
     +autoIncOff
 .loopLineY
-    lda TEMP_32_X + 1
-    sta VERA
-    lda TEMP_32_X + 2
-    sta VERA + 1
-    lda TEMP_32_X + 3
-    sta VERA + 2 
+    +setVeraRegisters .VRAM
 
+    ; reverse pixel
     lda VERA_DATA_0
     eor #$FF
     sta VERA_DATA_0
 
-    inc REV_Y
-    lda REV_Y
-    cmp #RES_Y
+    inc .V_START_Y
+    lda .V_START_Y
+    cmp .V_END_Y
     beq .doneVline
 
-    +callFunc add32BitUnsigned, CONST_320, TEMP_32_X
+    +callFunc add32BitUnsigned, .CONST_X_RES, .VRAM_32Bit
     bra .loopLineY 
 
 .doneVline
     rts
 
+; --------------------------------------------------
+; This routine resets all parameters which are needed to select a zoom section
+;
+; resetZoomRectDefault has no return value
+; --------------------------------------------------
+resetZoomRectDefault
+    +load16BitImmediate RES_X, ZOOM_X_SIZE
+    lda #RES_Y
+    sta ZOOM_Y_SIZE
+    +load16BitImmediate 0, ZOOM_X_POS
+    stz ZOOM_Y_POS
+    stz ZOOM_DIFF
+    rts
+
+MAX_ZOOM_DIFF = 5
+
+ZOOM_DIFF
+!byte 0
+
 ZOOM_X_SIZE
-!byte $40, $01
+!byte 160, 0
 ZOOM_Y_SIZE
-!byte 240
+!byte 120
 
 ZOOM_X_POS
 !byte 0, 0
 ZOOM_Y_POS
-!byte 120
+!byte 0
 ; --------------------------------------------------
 ; This routine draws a rectangle on the bitmap screen which symbolizes the
-; zoom level.
+; section of the Mandelbrot set that is zoomed into. It draws by reversing 
+; the color of affected pixles which means the original state is restored 
+; when the reversing is repeated a second time.
 ;
-; drawZoomRect has no return value
+; drawZoomRect has no return value.
 ; --------------------------------------------------
 drawZoomRect
+    ; draw upper horizontal line
+    +move16Bit ZOOM_X_POS, .H_START_X
+    lda ZOOM_Y_POS
+    sta .H_START_Y
+    +move16Bit ZOOM_X_SIZE, .H_LEN
+    jsr reverseHLine
+
+    ; draw lower horizontal line
+    +move16Bit ZOOM_X_POS, .H_START_X
+    lda ZOOM_Y_POS
+    clc
+    adc ZOOM_Y_SIZE
+    bcc .storeYpos                                             ; take care of 8 bit unsigned overflow
+    lda #$ff
+.storeYpos
+    sta .H_START_Y
+    +move16Bit ZOOM_X_SIZE, .H_LEN
+    jsr reverseHLine
+
+    ; draw left vertical line
+    +move16Bit ZOOM_X_POS, .V_START_X
+    lda ZOOM_Y_POS
+    sta .V_START_Y
+    lda ZOOM_Y_SIZE
+    sta .V_LEN
     jsr reverseVLine
 
+    ; draw right vertical line
+    +move16Bit ZOOM_X_POS, .V_START_X
+    +add16Bit  ZOOM_X_SIZE, .V_START_X
+    lda ZOOM_Y_POS
+    sta .V_START_Y
+    lda ZOOM_Y_SIZE
+    sta .V_LEN
+    jsr reverseVLine
+
+    rts
+
+; --------------------------------------------------
+; This routine allows to select a new subsection of the Mandelbrot set for
+; visualization. 
+; 
+; showZoomRect has no return value. The selected pixel and additional zoom levels
+; can be read from ZOOM_X_POS, ZOOM_Y_POS and ZOOM_DIFF as soon as the subroutine
+; has returned.
+; --------------------------------------------------
+showZoomRect
+    jsr resetZoomRectDefault
+    jsr drawZoomRect
+.commandLoop
+    jsr waitForKey
+    cmp #CURSOR_LEFT
+    bne .checkRight
+
+    ; handle Cursor left key
+    +cmp16BitImmediate 0, ZOOM_X_POS
+    beq .skipLeft                                               ; we can not go further left if we are at x-position zero
+    ; move section to the left
+    jsr drawZoomRect
+    +dec16Bit ZOOM_X_POS
+    jsr drawZoomRect
+.skipLeft
+    jmp .commandLoop
+
+.checkRight
+    cmp #CURSOR_RIGHT
+    bne .checkUp
+
+    ; handle Cursor right key
+    +cmp16BitImmediate RES_X-1, ZOOM_X_POS
+    beq .skipRight                                              ; we can not go further to the right when we are at x-position RES_X - 1
+
+    ; move section to the right
+    jsr drawZoomRect
+    +inc16Bit ZOOM_X_POS
+    jsr drawZoomRect
+.skipRight
+    jmp .commandLoop
+
+.checkUp
+    cmp #CURSOR_UP
+    bne .checkDown
+
+    ; handle Cursor up key
+    lda ZOOM_Y_POS                                              ; we can not go further up if we are at y-position zero
+    beq .skipUp
+
+    ; Move section up
+    jsr drawZoomRect
+    dec ZOOM_Y_POS
+    jsr drawZoomRect
+.skipUp    
+    jmp .commandLoop
+
+.checkDown
+    cmp #CURSOR_DOWN
+    bne .checkZoomIn
+
+    ; handle Cursor down key
+    lda ZOOM_Y_POS                                              ; we can not go further down if we are at y-position RES_Y - 1
+    cmp #RES_Y-1
+    beq .skipDown
+
+    ; move section down
+    jsr drawZoomRect
+    inc ZOOM_Y_POS
+    jsr drawZoomRect
+.skipDown    
+    jmp .commandLoop
+
+.checkZoomIn
+    cmp #ZOOM_IN
+    bne .checkZoomOut
+    
+    ; handle F1 key
+    lda ZOOM_DIFF
+    cmp #MAX_ZOOM_DIFF
+    beq .skipZoomIn                                             ; We can only zoom in MAX_ZOOM_DIFF levels in the same pricture
+
+    lda ZOOM_LEVEL
+    clc
+    adc ZOOM_DIFF
+    cmp #MAX_ZOOM_LEVEL
+    beq .skipZoomIn                                             ; We can only zoom in the maximum number of allowed levels in order to prevent accuracy problems
+
+    ; Zoom in and halve selection frame in size
+    inc ZOOM_DIFF
+    jsr drawZoomRect
+    +halve16Bit ZOOM_X_SIZE
+    lsr ZOOM_Y_SIZE
+    jsr drawZoomRect
+
+.skipZoomIn
+    jmp .commandLoop
+.checkZoomOut
+    cmp #ZOOM_OUT
+    bne .checkReturn
+
+    ; handle F3 key
+    lda ZOOM_DIFF
+    beq .skipZoomOut                                           ; we can not zoom out of the current picture, i.e. if ZOOM_DIFF is zero
+    
+    ; Zoom out and double selection frame in size
+    dec ZOOM_DIFF
+    jsr drawZoomRect
+    +double16Bit ZOOM_X_SIZE
+    asl ZOOM_Y_SIZE
+    jsr drawZoomRect
+
+.skipZoomOut    
+    jmp .commandLoop
+.checkReturn
+    cmp #KEY_RETURN
+    ; Handle Return key
+    beq .zoomDone                                               ; Return was pressed => End selection     
+    jmp .commandLoop
+.zoomDone
     rts

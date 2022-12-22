@@ -8,7 +8,8 @@
 
 RES_X = 320
 RES_Y = 240
-MAX_ZOOM_LEVEL = 17
+MAX_ZOOM_LEVEL = 15
+KEY_DO_ZOOM = $87
 
 ENTRY_POINT
 jmp progStart
@@ -24,6 +25,9 @@ jmp progStart
 
 !zone vera
 !source "vera.a"
+
+!zone main
+!source "mandelhelp.a"
 
 ; --------------------------------------------------
 ; values settable/usable by callers
@@ -303,26 +307,93 @@ mandelLoop
     rts
 
 
-
 !ifndef TESTS {
+
+.TXT_VALUES
+!byte 56
+!tx "THE FOLLOWING VALUES WERE USED IN THE LAST CALCULATION"
+!byte 13, 13
+
+.TXT_REAL_PART
+!byte 18
+!tx "REAL PART      : $"
+
+.TXT_IMAGINARY_PART
+!byte 18
+!tx "IMAGINARY PART : $"
+
+.TXT_ZOOM_LEVEL
+!byte 18
+!tx "ZOOM LEVEL     : $"
+
+.TXT_ITERATION_DEPTH
+!byte 18
+!tx "ITERATION DEPTH: $"
+
+; --------------------------------------------------
+; This routine performs all neccessary steps for selecting
+; a new upper left corner in the set and a new stepping width 
+; in X and Y direction (i.e. zomming into the set).
+;
+; This routine does not return any values.
+; --------------------------------------------------
+.processZoomResult
+    +move16Bit ZOOM_X_POS, COUNT_X
+    lda ZOOM_Y_POS
+    sta COUNT_Y
+    jsr deriveParametersFromPixel
+    ldx ZOOM_DIFF
+    beq .zoomingDone
+.zoomInMore    
+    jsr increaseZoomLevel
+    dex 
+    bne .zoomInMore
+.zoomingDone
+    rts
+
+
+; --------------------------------------------------
+; This routine prints the upper left corner as real and imaginary part, 
+; the zoom level and the iteration depth and allows to recreate the picture
+; in absence of a save routine.
+;
+; It does not return any values.
+; --------------------------------------------------
+.printLastValues
+    +printStr .TXT_VALUES
+    +printStr .TXT_REAL_PART
+    +printFixedPoint INIT_REAL
+    +printStr .TXT_IMAGINARY_PART
+    +printFixedPoint INIT_IMAG
+    +printStr .TXT_ZOOM_LEVEL
+    +printByteLN ZOOM_LEVEL
+    +printStr .TXT_ITERATION_DEPTH
+    +printByteLN MAX_ITER
+
+    rts
+
 ; --------------------------------------------------
 ; This routine is the main entry point of the program
 ; --------------------------------------------------
 progStart
     jsr initArithmetic
-    
-    ;jsr bitMapOn
-    ;jsr drawZoomRect
-    ;jsr waitForKey
-    ;jsr drawZoomRect
 
-    jsr bitMapOn
+.restart
+    jsr bitMapOn                       ; This also clears Video RAM
     jsr mandelLoop
-    lda .INTERRUPTED
-    bne .finish
+
     jsr waitForKey
+    cmp #KEY_DO_ZOOM                   ; F5 was pressed => Let user select a new section and zoom level
+    bne .finish                        ; Aother key was pressed => stop program
+
+    jsr showZoomRect
+    jsr .processZoomResult
+    jmp .restart
+
 .finish
     jsr bitMapOff
+    jsr .printLastValues
+
     rts
 
 } else {
