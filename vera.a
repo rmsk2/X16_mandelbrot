@@ -14,7 +14,7 @@ ZOOM_IN = $85
 ZOOM_OUT = $86
 
 ; --------------------------------------------------
-; This macro generates code for tuning on the auto increment
+; This macro generates code for turning on the auto increment
 ; functionality for VRAM access.
 ; --------------------------------------------------
 !macro autoIncOn {
@@ -34,7 +34,7 @@ ZOOM_OUT = $86
 }
 
 ; --------------------------------------------------
-; This macro generates code for selectin the VRAM address to
+; This macro generates code for selecting the VRAM address
 ; which is used for the next read or write operaton in video RAM
 ; --------------------------------------------------
 !macro setVeraRegisters .addr {
@@ -263,9 +263,9 @@ reverseVLine
     rts
 
 ; --------------------------------------------------
-; This routine resets all parameters which are needed to select a zoom section
+; This routine resets all parameters which are needed to select a zoom section.
 ;
-; resetZoomRectDefault has no return value
+; resetZoomRectDefault has no return value.
 ; --------------------------------------------------
 resetZoomRectDefault
     +load16BitImmediate RES_X, ZOOM_X_SIZE
@@ -292,8 +292,8 @@ ZOOM_Y_POS
 !byte 0
 ; --------------------------------------------------
 ; This routine draws a rectangle on the bitmap screen which symbolizes the
-; section of the Mandelbrot set that is zoomed into. It draws by reversing 
-; the color of affected pixles which means the original state is restored 
+; section of the Mandelbrot set that is zoomed into. Drawing is done by reversing 
+; the color of affected pixels which means the original state is restored 
 ; when the reversing is repeated a second time.
 ;
 ; drawZoomRect has no return value.
@@ -341,9 +341,8 @@ drawZoomRect
 ; This routine allows to select a new subsection of the Mandelbrot set for
 ; visualization. 
 ; 
-; showZoomRect has no return value. The selected pixel and additional zoom levels
-; can be read from ZOOM_X_POS, ZOOM_Y_POS and ZOOM_DIFF as soon as the subroutine
-; has returned.
+; The selected pixel and additional zoom levels can be read from ZOOM_X_POS, 
+; ZOOM_Y_POS and ZOOM_DIFF as soon as the subroutine has returned.
 ; --------------------------------------------------
 showZoomRect
     jsr resetZoomRectDefault
