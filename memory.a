@@ -1,0 +1,161 @@
+
+!macro setBank .bankNumAddr {
+    lda .bankNumAddr
+    sta $0
+}
+
+!macro setBankImmediate .bankNum {
+    lda #.bankNum
+    sta $0
+}
+
+
+BLOCK_CTR
+!byte 0
+
+NUM_BLOCKS
+!byte 0
+
+!macro readBlocks .numBlocks {
+    lda #.numBlocks
+    sta NUM_BLOCKS
+    jsr readBlocksCall
+}
+
+; --------------------------------------------------
+; This routine copies a number of 256 byte block from video RAM to banked RAM.
+; The number of blocks to copy is given in NUM_BLOCKS. As one RAM bank has 32 blocks
+; a bigger value than 32 for NUM_BLOCKS makes no sense.
+;
+; This routine has no return value.
+; --------------------------------------------------
+readBlocksCall
+    stz BLOCK_CTR
+    +load16BitImmediate $A000, MEM_CPY_PTR
+    ldy #0
+.blockLoopRead
+    lda VERA_DATA_0
+    sta (MEM_CPY_PTR), y    
+    iny
+    bne .blockLoopRead
+    inc MEM_CPY_PTR + 1
+    inc BLOCK_CTR
+    lda BLOCK_CTR
+    cmp NUM_BLOCKS
+    bne .blockLoopRead
+
+    rts
+
+
+!macro writeBlocks .numBlocks {
+    lda #.numBlocks
+    sta NUM_BLOCKS
+    jsr writeBlocksCall
+}
+
+; --------------------------------------------------
+; This routine copies a number of 256 byte block from banked RAM to video RAM.
+; The number of blocks to copy is given in NUM_BLOCKS. As one RAM bank has 32 blocks
+; a bigger value than 32 for NUM_BLOCKS makes no sense.
+;
+; This routine has no return value.
+; --------------------------------------------------
+writeBlocksCall
+    stz BLOCK_CTR
+    +load16BitImmediate $A000, MEM_CPY_PTR
+    ldy #0
+.blockLoopWrite
+    lda (MEM_CPY_PTR), y   
+    sta VERA_DATA_0
+    iny
+    bne .blockLoopWrite
+    inc MEM_CPY_PTR + 1
+    inc BLOCK_CTR
+    lda BLOCK_CTR
+    cmp NUM_BLOCKS
+    bne .blockLoopWrite
+
+    rts
+
+
+SAVED_VERA_STATE
+!byte 0,0,0
+
+.TARGET_BANK_NUM
+!byte 0
+
+.NUM_FULL_BANKS
+!byte 9
+
+.BLOCKS_IN_LAST_BANK
+!byte 12
+
+.FULL_BANK_COUNT
+!byte 0
+
+; 8K = 32 * 256
+; 320 * 240 = 76800 = 9 * 8K + 3072
+; 3072 = 12 * 256
+; --------------------------------------------------
+; This routine copies the first 76800 bytes of video RAM into banked RAM 
+; and thereby save the current state of the hires screen. The banks 32-42 are
+; used for this purpose.
+;
+; This routine has no return value.
+; --------------------------------------------------
+saveHiresData
+    +saveVeraRegisters SAVED_VERA_STATE
+    
+    lda #32 
+    sta .TARGET_BANK_NUM
+    stz .FULL_BANK_COUNT
+    +selectDataPort0
+    +setVRAMStart
+    +autoIncOn    
+
+.saveLoopRead
+    +setBank .TARGET_BANK_NUM
+    +readBlocks 32
+    inc .TARGET_BANK_NUM
+    inc .FULL_BANK_COUNT
+    lda .FULL_BANK_COUNT
+    cmp .NUM_FULL_BANKS
+    beq .lastBlockRead
+    bra .saveLoopRead
+.lastBlockRead
+    +setBank .TARGET_BANK_NUM
+    +readBlocks 12
+
+    rts
+
+; --------------------------------------------------
+; This routine copies video RAM data saved with saveHiresData from
+; banked RAM back to video RAM and thereby restores the contents of the
+; hires screen. The banks 32-42 are used for this purpose.
+;
+; This routine has no return value.
+; --------------------------------------------------
+restoreHiresData
+    lda #32 
+    sta .TARGET_BANK_NUM
+    stz .FULL_BANK_COUNT
+    +selectDataPort0
+    +setVRAMStart
+    +autoIncOn    
+
+.saveLoopWrite
+    +setBank .TARGET_BANK_NUM
+    +writeBlocks 32
+    inc .TARGET_BANK_NUM
+    inc .FULL_BANK_COUNT
+    lda .FULL_BANK_COUNT
+    cmp .NUM_FULL_BANKS
+    beq .lastBlockWrite
+    bra .saveLoopWrite
+.lastBlockWrite
+    +setBank .TARGET_BANK_NUM
+    +writeBlocks 12
+
+    +loadVeraRegisters SAVED_VERA_STATE
+
+    rts

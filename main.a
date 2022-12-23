@@ -25,6 +25,7 @@ jmp progStart
 
 !zone vera
 !source "vera.a"
+!source "memory.a"
 
 !zone main
 !source "mandelhelp.a"
@@ -289,20 +290,21 @@ nextMandel
 ; This routine visualizes the Mandelbrot set 
 ; --------------------------------------------------
 mandelLoop
-    stz .INTERRUPTED
+    lda .INTERRUPTED
+    bne .resetInterruped
     jsr initMandel
+.resetInterruped
+    stz .INTERRUPTED
 
 .loopUntilFinished
     jsr nextMandel
     jsr checkKey
-    bne .interruptMandel
+    sta .INTERRUPTED
+    bne .doneMandel
     lda COUNT_Y
     cmp MAX_Y
     bne .loopUntilFinished
     bra .doneMandel
-.interruptMandel
-    lda #1
-    sta .INTERRUPTED
 .doneMandel
     rts
 
@@ -339,6 +341,11 @@ mandelLoop
 !byte 18
 !tx "STEP Y         : $"
 
+.TXT_CONTINUE
+!byte 49
+!byte 13
+!tx "PRESS RETURN TO CONTINUE. ANY OTHER KEY TO QUIT."
+!byte 13
 
 ; --------------------------------------------------
 ; This routine performs all neccessary steps for selecting
@@ -386,6 +393,7 @@ mandelLoop
 
     rts
 
+
 ; --------------------------------------------------
 ; This routine is the main entry point of the program
 ; --------------------------------------------------
@@ -394,20 +402,38 @@ progStart
 
 .restart
     jsr bitMapOn                       ; This also clears Video RAM
+.continuePic
     jsr mandelLoop
 
-    jsr waitForKey
+    lda .INTERRUPTED
+    beq .waitMandel
     cmp #KEY_DO_ZOOM                   ; F5 was pressed => Let user select a new section and zoom level
-    bne .finish                        ; Aother key was pressed => stop program
+    bne .showInfo                      ; Aother key was pressed
 
+.doZoomIn
     jsr showZoomRect
     jsr .processZoomResult
+    stz .INTERRUPTED
     jmp .restart
-
-.finish
+.showInfo
+    jsr saveHiresData
     jsr bitMapOff
     jsr .printLastValues
+    +printStr .TXT_CONTINUE
+    jsr waitForKey
+    cmp #13
+    bne .endMandel
+    jsr bitMapOn
+    jsr restoreHiresData
+    jmp .continuePic
 
+.waitMandel
+    jsr waitForKey
+    cmp #KEY_DO_ZOOM
+    beq .doZoomIn
+    jsr bitMapOff
+    jsr .printLastValues
+.endMandel
     rts
 
 } else {

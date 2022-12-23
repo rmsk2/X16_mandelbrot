@@ -37,13 +37,37 @@ ZOOM_OUT = $86
 ; This macro generates code for selecting the VRAM address
 ; which is used for the next read or write operaton in video RAM
 ; --------------------------------------------------
-!macro setVeraRegisters .addr {
+!macro loadVeraRegisters .addr {
     lda .addr
     sta VERA
     lda .addr + 1
     sta VERA + 1
     lda .addr + 2
     sta VERA + 2 
+}
+
+; --------------------------------------------------
+; This macro generates code for saving the VRAM address
+; which is used for the next read or write operaton in video RAM
+; --------------------------------------------------
+!macro saveVeraRegisters .addr {
+    lda VERA
+    sta .addr
+    lda VERA + 1
+    sta .addr + 1
+    lda VERA + 2
+    sta .addr + 2
+}
+
+; --------------------------------------------------
+; This macro generates code for setting the VRAM read/write address
+; to 0.
+; --------------------------------------------------
+!macro setVRAMStart {
+    lda #0
+    sta VERA             
+    sta VERA + 1
+    sta VERA + 2    
 }
 
 ; --------------------------------------------------
@@ -86,10 +110,7 @@ bitMapOn
     jsr screen_mode      
     bcs .endErrInit      ; carry is set on error
     +selectDataPort0
-    lda #0
-    sta VERA             
-    sta VERA + 1
-    sta VERA + 2
+    +setVRAMStart
     +autoIncOn
 .endErrInit
     rts
@@ -178,7 +199,7 @@ reverseHLine
     sta .PIXEL_Y
     jsr calcVRAMAddress
 
-    +setVeraRegisters .VRAM
+    +loadVeraRegisters .VRAM
 
 .loopLineX
     lda VERA_DATA_0
@@ -244,7 +265,7 @@ reverseVLine
 
     +autoIncOff
 .loopLineY
-    +setVeraRegisters .VRAM
+    +loadVeraRegisters .VRAM
 
     ; reverse pixel
     lda VERA_DATA_0
@@ -268,12 +289,13 @@ reverseVLine
 ; resetZoomRectDefault has no return value.
 ; --------------------------------------------------
 resetZoomRectDefault
-    +load16BitImmediate RES_X, ZOOM_X_SIZE
-    lda #RES_Y
+    +load16BitImmediate (RES_X / 2), ZOOM_X_SIZE
+    lda #(RES_Y / 2)
     sta ZOOM_Y_SIZE
     +load16BitImmediate 0, ZOOM_X_POS
     stz ZOOM_Y_POS
-    stz ZOOM_DIFF
+    lda #1
+    sta ZOOM_DIFF
     rts
 
 MAX_ZOOM_DIFF = 5

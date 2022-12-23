@@ -24,9 +24,8 @@ your machine. Under Linux the makefile should run without changes as long as ACM
 
 # Zooming into the Mandelbrot set
 
-The calculation can be interrupted at any time by pressing a key. If `F5` is pressed after the calculation is
-halted in this fashion you can select a new section of the Mandelbrot set. Pressing any other key terminates the 
-program. Use the following key commands to select the new section:
+The calculation can be interrupted at any time by pressing a key. If `F5` is pressed you can select a new section of 
+the Mandelbrot set. Use the following key commands to select the new section:
 
 | Key | Function |
 |-|-|
