@@ -312,9 +312,9 @@ mandelLoop
 !ifndef TESTS {
 
 .TXT_VALUES
-!byte 57
+!byte 30
 !byte 13
-!tx "THE FOLLOWING VALUES WERE USED IN THE LAST CALCULATION"
+!tx "VALUES USED FOR CALCULATION"
 !byte 13, 13
 
 .TXT_REAL_PART
@@ -342,9 +342,11 @@ mandelLoop
 !tx "STEP Y         : $"
 
 .TXT_CONTINUE
-!byte 49
+!byte 50
 !byte 13
-!tx "PRESS RETURN TO CONTINUE. ANY OTHER KEY TO QUIT."
+!tx "PRESS RETURN TO CONTINUE." 
+!byte 13
+!tx "ANY OTHER KEY TO QUIT."
 !byte 13
 
 ; --------------------------------------------------
@@ -434,6 +436,7 @@ progStart
     jsr bitMapOff
     jsr .printLastValues
 .endMandel
+    stz .INTERRUPTED
     rts
 
 } else {

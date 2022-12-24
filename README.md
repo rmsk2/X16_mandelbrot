@@ -39,10 +39,13 @@ represents the currently selected new section. `F1` and  `F3` can be used to cha
 Pressing return starts the calculation of the selected subsection. If the  caclulation has finished you can 
 also select a new subsection  after pressing `F5`. Pressing any other key ends the program.
 
-Zooming in essence halves the stepping width in X and Y direction. As this software uses fixed point arithmetic 
-this results in a loss of accuracy which at a certain point can lead to visual artifacts in the form of spuriously
-colored pixels. In experiments these artifacts started to appear at zoom level 7 but did not affect the result
-overly negative. At zoom level 8 the quality suffers visibly.
+Zooming in essence halves the stepping width in X and Y direction and increases the so called zoom level by one. 
+As this software uses fixed point arithmetic this results in a loss of accuracy which at a certain point can 
+lead to visual artifacts in the form of spuriously colored pixels. In experiments these artifacts started to 
+appear at zoom level 6 or 7 but did not affect the result overly negative. At zoom level 8 the quality suffers 
+visibly. Here an example at zoom level 12 and iteration depth 64.
+
+![](/artifacts.png?raw=true "Example picture in hires mode")
 
 
 # Limitations at the moment
