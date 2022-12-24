@@ -79,8 +79,8 @@ Pressing return starts the calculation of the selected subsection.
 Zooming in essence halves the stepping width in X and Y direction and increases the so called zoom level by one. 
 As this software uses fixed point arithmetic this results in a loss of accuracy which at a certain point can 
 lead to visual artifacts in the form of spuriously colored pixels. In experiments these artifacts started to 
-appear at zoom level 6 or 7 but did not affect the result overly negative. At zoom level 8 the quality suffers 
-sometimes visibly. Here an example of this effect at zoom level 12 and iteration depth 64.
+appear at zoom level 6 or 7 but did not affect the result overly negative. At zoom level 8 the quality sometimes 
+suffers visibly. Here an example of this effect at zoom level 12 and iteration depth 64.
 
 ![](/artifacts.png?raw=true "Example picture showing artifacts")
 
