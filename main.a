@@ -448,6 +448,12 @@ selectIterationDepth
 !tx "LOADING ..."
 !byte 13
 
+.TXT_SAVING
+!byte 11
+!tx "SAVING ..."
+!byte 13
+
+
 ALLOWED_FILE_CHARS
 !byte 37
 !tx "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789."
@@ -467,6 +473,7 @@ savePicture
     pla
     cmp #0
     beq .noSave                                          ; do nothing if user entered an empty string
+    +printStr .TXT_SAVING    
     jsr saveHiresDataToDisk                              ; save data from banked RAM to disk
     rts
 
@@ -493,6 +500,7 @@ loadPicture
     rts
 
 .noLoad
+    lda #DISK_IO_ERR
     rts
 
 .TXT_SELECT
@@ -526,6 +534,9 @@ progStart
     jsr loadPicture
     cmp #DISK_IO_OK
     beq .doShowAfterLoad               ; do nothing if load failed 
+    jsr readAndEvalErrorChannel        ; read error channel
+    +printStr ERR_BYTE_COUNTER         ; print error message
+    jsr printCRLF    
     rts
 .doShowAfterLoad      
     jsr bitMapOn                       ; This also clears Video RAM
@@ -574,6 +585,9 @@ progStart
     cmp #KEY_DO_SAVE
     bne .infoOnly
     jsr savePicture                    ; save picture if user pressed F7. No error check. The routine generates error messages
+    jsr readAndEvalErrorChannel        ; read error channel
+    +printStr ERR_BYTE_COUNTER         ; print error message
+    jsr printCRLF
 .infoOnly
     jsr .printLastValues               ; print info about values used for calculation
 .endMandel

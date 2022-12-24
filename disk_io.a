@@ -67,7 +67,7 @@ readErrorChannel
 
     ; open 15,DEVICE_NUM,15
     +openChannelNoFileName 15, DEVICE_NUM, 15
-    bcs .checkError                   ; open failed
+    bcs .handleOpenError              ; open failed
 
     ldx #15
     jsr CHKIN                         ; use file 15 as input
@@ -89,15 +89,15 @@ readErrorChannel
 .close 
     lda #15                           
     jsr CLOSE                         ; close file 15
-.endWithoutClose                       
+;.endWithoutClose                       
     jsr CLRCHN                        ; restore default input and output channels
 
     rts
-.checkError
+.handleOpenError
     ; room for additional error handling
     lda #DISK_IO_ERR
     sta DISK_ERROR
-    jmp .endWithoutClose              
+    jmp .close                        ; Even if open failed we have to close the channel              
 
 
 ; --------------------------------------------------

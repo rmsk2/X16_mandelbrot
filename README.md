@@ -22,6 +22,10 @@ your machine. Under Linux the makefile should run without changes as long as ACM
 
 ![](/result.png?raw=true "Example picture in hires mode")
 
+# Using the program
+
+When you start the program you can select whether you want to start with the current 
+
 # Zooming into the Mandelbrot set
 
 The calculation can be interrupted at any time by pressing a key and resumed by again by pressing `RETURN`. 
@@ -38,7 +42,7 @@ select the new section:
 The cursor keys can be used to move a rectangular frame of reversed pixels over the visualization. The frame
 represents the currently selected new section. `F1` and  `F3` can be used to change the size of that frame. 
 Pressing return starts the calculation of the selected subsection. If the  caclulation has finished you can 
-also select a new subsection  after pressing `F5`. Pressing any other key ends the program.
+also select a new subsection after pressing `F5`. Pressing any other key ends the program.
 
 Zooming in essence halves the stepping width in X and Y direction and increases the so called zoom level by one. 
 As this software uses fixed point arithmetic this results in a loss of accuracy which at a certain point can 
@@ -51,9 +55,7 @@ visibly. Here an example of this effect at zoom level 12 and iteration depth 64.
 
 # Limitations at the moment
 
-- No possibility to save the caclulated picture. As a primitive workaround all the parameters needed to recreate
-the last picture are printed to the screen when the program shuts down.
-- No possibilty to view a saved picture
+- Loading and saving pictures only work with a mounted SD-card image. I am at the moment not sure if I can do anything about that.
 - As I do not have access to real hardware and therefore have to use the X16 emulator it is not 100% sure that the program
 performs in the same way on a real machine
 - I have not yet tested whether my fixed point math routines are actually faster than the floating point routines
