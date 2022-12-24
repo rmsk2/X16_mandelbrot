@@ -10,6 +10,7 @@ RES_X = 320
 RES_Y = 240
 MAX_ZOOM_LEVEL = 15
 KEY_DO_ZOOM = $87
+ITER_DEFAULT = 24
 
 ENTRY_POINT
 jmp progStart
@@ -36,7 +37,7 @@ jmp progStart
 
 ; maxmimum number of iterations
 MAX_ITER
-!byte 24
+!byte ITER_DEFAULT
 
 ; The number of iterations used for the current point
 NUM_ITER
@@ -396,11 +397,54 @@ mandelLoop
     rts
 
 
+.TXT_SELECT_DEPTH
+!byte 40
+!tx "SELECT ITERATION DEPTH (24 IS DEFAULT): "
+
+DEC_CHARS
+!byte 10
+!tx "0123456789"
+
+.BUFFER_DEPTH
+!byte 3
+!tx 0,0,0
+
+.NEW_DEPTH_RAW
+!byte 0,0
+
+; --------------------------------------------------
+; This routine allows the user to select an iteration depth
+; 
+; It does not return a value but modifies MAX_ITER.
+; --------------------------------------------------
+selectIterationDepth
+    +printStr .TXT_SELECT_DEPTH
+    lda #3
+    sta .BUFFER_DEPTH
+    +inputStr .BUFFER_DEPTH, DEC_CHARS
+    pha
+    jsr printCRLF
+    pla
+    cmp #0
+    beq .defaultDepth
+    +atoi .BUFFER_DEPTH, .NEW_DEPTH_RAW
+    +cmp16BitImmediate 254, .NEW_DEPTH_RAW
+    bcc selectIterationDepth
+    lda .NEW_DEPTH_RAW
+    sta MAX_ITER
+    bra .selectionDone
+.defaultDepth    
+    lda #ITER_DEFAULT
+    sta MAX_ITER
+.selectionDone
+    rts
+
 ; --------------------------------------------------
 ; This routine is the main entry point of the program
 ; --------------------------------------------------
 progStart
     jsr initArithmetic
+    jsr selectIterationDepth
 
 .restart
     jsr bitMapOn                       ; This also clears Video RAM

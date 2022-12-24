@@ -24,8 +24,9 @@ your machine. Under Linux the makefile should run without changes as long as ACM
 
 # Zooming into the Mandelbrot set
 
-The calculation can be interrupted at any time by pressing a key. If `F5` is pressed you can select a new section of 
-the Mandelbrot set. Use the following key commands to select the new section:
+The calculation can be interrupted at any time by pressing a key and resumed by again by pressing `RETURN`. 
+If `F5` is pressed you can select a new section of the Mandelbrot set. Use the following key commands to 
+select the new section:
 
 | Key | Function |
 |-|-|
@@ -43,7 +44,7 @@ Zooming in essence halves the stepping width in X and Y direction and increases 
 As this software uses fixed point arithmetic this results in a loss of accuracy which at a certain point can 
 lead to visual artifacts in the form of spuriously colored pixels. In experiments these artifacts started to 
 appear at zoom level 6 or 7 but did not affect the result overly negative. At zoom level 8 the quality suffers 
-visibly. Here an example at zoom level 12 and iteration depth 64.
+visibly. Here an example of this effect at zoom level 12 and iteration depth 64.
 
 ![](/artifacts.png?raw=true "Example picture in hires mode")
 
