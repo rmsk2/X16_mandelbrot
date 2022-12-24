@@ -22,6 +22,21 @@ your machine. Under Linux the makefile should run without changes as long as ACM
 
 ![](/result.png?raw=true "Example picture in hires mode")
 
+# About my motivation for writing this program
+
+Why does someone write a program (in machine language) for an 8-bit microprocessor which is nowadys only 
+used in small embedded systems, that offers functionality which is on several levels (performance, 
+visual appeal, ...) orders of magnitude worse than software written for the same purpose for modern 
+systems? And on top of that the computer that the program is designed to run on does only exist to
+a certain extent as only a few prototypes have been built yet.
+
+The only reasons I can give are: I had fun doing it and it was nostalgic as it transported me back to
+the days when another 6502 system was the center of the (home) computing universe. The commander
+X16 (or to be more precise at the moment its emulator) strikes the right balance between new possibilities 
+and a nostalgic familiarity with the Commodore family of home computers that allows all the people
+that grew up with these computers to now write the programs that they did not or could not write in
+the 80ies or 90ies.
+
 # Using the program
 
 When you start the program you can select whether you want 1. to load a picture and its corresponding values, 2. 
@@ -72,7 +87,7 @@ visibly. Here an example of this effect at zoom level 12 and iteration depth 64.
 
 # Limitations at the moment
 
-- Loading and saving pictures only work with a mounted SD-card image. I am at the moment not sure if I can do anything about that.
+- Loading and saving pictures only works with a mounted SD-card image. I am at the moment not sure if I can do anything about that.
 - As I do not have access to real hardware and therefore have to use the X16 emulator it is not 100% sure that the program
 performs in the same way on a real machine
 - I have not yet tested whether my fixed point math routines are actually faster than the floating point routines
