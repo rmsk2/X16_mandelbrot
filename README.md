@@ -45,7 +45,7 @@ number. Alternatives 2. and 3. differ in the fact that 2. reuses the current cal
 still present in RAM as long as you do not reset the computer. This can for instance be utilized to redraw a picture 
 with an increased iteration depth. The iteration depth can be set after selecting option 1. or 2.
 
-When you select option 3. the picture data and its associated parameters are loaded into RAM and then shown
+When you select option 1. the picture data and its associated parameters are loaded into RAM and then shown
 on the screen. You can zoom into the picture by pressing `F5` (see *Zooming into the Mandelbrot set*) below or 
 you can look at the parameters by pressing any other key.
 
