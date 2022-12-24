@@ -504,10 +504,12 @@ loadPicture
     rts
 
 .TXT_SELECT
-!byte 31
+!byte 60
 !tx "1. LOAD PICTURE"
 !byte 13
-!tx "2. USE DEFAULT"
+!tx "2. USE CURRENT VALUES"
+!byte 13
+!tx "3. USE DEFAULT VALUES"
 !byte 13
 
 
@@ -524,9 +526,14 @@ progStart
     cmp #49                            ; 1. pressed?
     beq .startLoad                     ; yes
     cmp #50                            ; 2. pressed?
+    beq .useCurrent                    ; yes
+    cmp #51                            ; 3. pressed?
     bne .inputSelect                   ; No => try again
 
-    jsr selectIterationDepth           ; user did not want to load a picure
+    ; 3 was pressed
+    jsr resetParametersHires
+.useCurrent
+    jsr selectIterationDepth           ; let user select iteration depth
     bra .restart
 
     ; load a picture

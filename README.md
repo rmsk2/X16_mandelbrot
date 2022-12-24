@@ -24,11 +24,27 @@ your machine. Under Linux the makefile should run without changes as long as ACM
 
 # Using the program
 
-When you start the program you can select whether you want to start with the current 
+When you start the program you can select whether you want 1. to load a picture and its corresponding values, 2. 
+use the current values or 3. reset to the default values. An option is selected by pressing the corresponding
+number. Alternatives 2. and 3. differ in the fact that 2. reuses the current calculation parameters which are
+still present in RAM as long as you do not reset the computer. This can for instance be utilized to redraw a picture 
+with an increased iteration depth. The iteration depth can be set after selecting option 1. or 2.
+
+When you select option 3. the picture data and its associated parameters are loaded into RAM and then shown
+on the screen. You can zoom into the picture by pressing `F5` (see *Zooming into the Mandelbrot set*) below or 
+you can look at the parameters by pressing any other key.
+
+When you select option 2. or 3. a new picture is calculated. The calculation can be interrupted at any time
+by pressing a key. If that key is `F5` you can zoom into the Mandelbrot set (see corresponding section below).
+When any other key is pressed the parameters used for calculation are presented. If you then press `RETURN` the
+calculation is continued. Any other key terminates the program.
+
+If all calculations for a picture have been performed the program waits for a key press. You can press `F5` 
+to zoom further into the set (see below) or press `F7` to save the picture on SD card. If you press any other 
+key the values used for the calculation are printed to the screen and the program terminates.
 
 # Zooming into the Mandelbrot set
 
-The calculation can be interrupted at any time by pressing a key and resumed by again by pressing `RETURN`. 
 If `F5` is pressed you can select a new section of the Mandelbrot set. Use the following key commands to 
 select the new section:
 
@@ -41,8 +57,7 @@ select the new section:
 
 The cursor keys can be used to move a rectangular frame of reversed pixels over the visualization. The frame
 represents the currently selected new section. `F1` and  `F3` can be used to change the size of that frame. 
-Pressing return starts the calculation of the selected subsection. If the  caclulation has finished you can 
-also select a new subsection after pressing `F5`. Pressing any other key ends the program.
+Pressing return starts the calculation of the selected subsection.
 
 Zooming in essence halves the stepping width in X and Y direction and increases the so called zoom level by one. 
 As this software uses fixed point arithmetic this results in a loss of accuracy which at a certain point can 

@@ -292,8 +292,9 @@ resetZoomRectDefault
     +load16BitImmediate (RES_X / 2), ZOOM_X_SIZE
     lda #(RES_Y / 2)
     sta ZOOM_Y_SIZE
-    +load16BitImmediate 0, ZOOM_X_POS
-    stz ZOOM_Y_POS
+    +load16BitImmediate 10, ZOOM_X_POS
+    lda #10
+    sta ZOOM_Y_POS
     lda #1
     sta ZOOM_DIFF
     rts
