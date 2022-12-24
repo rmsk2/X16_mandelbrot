@@ -10,6 +10,7 @@ RES_X = 320
 RES_Y = 240
 MAX_ZOOM_LEVEL = 15
 KEY_DO_ZOOM = $87
+KEY_DO_SAVE = $88
 ITER_DEFAULT = 24
 
 ENTRY_POINT
@@ -24,6 +25,9 @@ jmp progStart
 !zone string
 !source "string.a"
 
+!zone disk_io
+!source "disk_io.a"
+
 !zone vera
 !source "vera.a"
 !source "memory.a"
@@ -31,20 +35,9 @@ jmp progStart
 !zone main
 !source "mandelhelp.a"
 
-; --------------------------------------------------
-; values settable/usable by callers
-; --------------------------------------------------
-
-; maxmimum number of iterations
-MAX_ITER
-!byte ITER_DEFAULT
-
-; The number of iterations used for the current point
-NUM_ITER
-!byte 0
 
 ; **************************************************
-; The following 5 values have to be contiguously laid out
+; The following 6 values have to be contiguously laid out
 ; in memory. The load and save routines expect this.
 
 ; x offset to move in complex plane for next point
@@ -65,6 +58,10 @@ INIT_IMAG
 
 ZOOM_LEVEL
 !byte 0
+
+; maximum number of iterations
+MAX_ITER
+!byte ITER_DEFAULT
 ; **************************************************
 
 ; Number of points (resolution) in x direction
@@ -83,10 +80,13 @@ COUNT_X
 COUNT_Y
 !byte 0
 
-
 ; --------------------------------------------------
 ; variables used for calculation
 ; --------------------------------------------------
+
+; The number of iterations used for the current point
+NUM_ITER
+!byte 0
 
 REAL
 !byte 0,2,0,0,0
@@ -420,67 +420,164 @@ DEC_CHARS
 selectIterationDepth
     +printStr .TXT_SELECT_DEPTH
     lda #3
-    sta .BUFFER_DEPTH
-    +inputStr .BUFFER_DEPTH, DEC_CHARS
+    sta .BUFFER_DEPTH                                         ; set number of bytes available in input string
+    +inputStr .BUFFER_DEPTH, DEC_CHARS                        ; Get input string, as string of digits
+    pha                                                       ; save length of entered string
+    jsr printCRLF
+    pla                                                       ; restore string length
+    cmp #0                                                    ; check for empty string
+    beq .defaultDepth                                         ; User only pressed return => Use default
+    +atoi .BUFFER_DEPTH, .NEW_DEPTH_RAW                       ; Convert string to a number
+    +cmp16BitImmediate 254, .NEW_DEPTH_RAW                    ; Value entered was too big => Let's try that again
+    bcc selectIterationDepth
+    lda .NEW_DEPTH_RAW
+    sta MAX_ITER                                              ; Store new value entered by the user
+    bra .selectionDone
+.defaultDepth    
+    lda #ITER_DEFAULT
+    sta MAX_ITER                                              ; (Re)store default value
+.selectionDone
+    rts
+
+.TXT_FILE_NAME
+!byte 10
+!tx "FILENAME: "
+
+.TXT_LOADING
+!byte 12
+!tx "LOADING ..."
+!byte 13
+
+ALLOWED_FILE_CHARS
+!byte 37
+!tx "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789."
+
+; --------------------------------------------------
+; This routine saves a picture and the corresponding parameters to disk
+; 
+; It returns DISK_IO_OK if saving was successfull.
+; --------------------------------------------------
+savePicture
+    +printStr .TXT_FILE_NAME
+    lda #MAX_FILE_NAME_LENGTH                            ; restore input buffer cpacity
+    sta FILE_NAME_SAVE_LOAD
+    +inputStr FILE_NAME_SAVE_LOAD, ALLOWED_FILE_CHARS
     pha
     jsr printCRLF
     pla
     cmp #0
-    beq .defaultDepth
-    +atoi .BUFFER_DEPTH, .NEW_DEPTH_RAW
-    +cmp16BitImmediate 254, .NEW_DEPTH_RAW
-    bcc selectIterationDepth
-    lda .NEW_DEPTH_RAW
-    sta MAX_ITER
-    bra .selectionDone
-.defaultDepth    
-    lda #ITER_DEFAULT
-    sta MAX_ITER
-.selectionDone
+    beq .noSave                                          ; do nothing if user entered an empty string
+    jsr saveHiresDataToDisk                              ; save data from banked RAM to disk
     rts
+
+.noSave
+    rts
+
+; --------------------------------------------------
+; This routine loads a picture and the corresponding parameters from disk
+; 
+; It returns DISK_IO_OK if loading was successfull.
+; --------------------------------------------------
+loadPicture
+    +printStr .TXT_FILE_NAME
+    lda #MAX_FILE_NAME_LENGTH                           ; restore input buffer cpacity
+    sta FILE_NAME_SAVE_LOAD
+    +inputStr FILE_NAME_SAVE_LOAD, ALLOWED_FILE_CHARS
+    pha
+    jsr printCRLF
+    pla
+    cmp #0
+    beq .noLoad                                         ; do nothing if user entered empty string
+    +printStr .TXT_LOADING    
+    jsr loadHiresDataFromDisk                           ; load data and store it in banked RAM
+    rts
+
+.noLoad
+    rts
+
+.TXT_SELECT
+!byte 31
+!tx "1. LOAD PICTURE"
+!byte 13
+!tx "2. USE DEFAULT"
+!byte 13
+
 
 ; --------------------------------------------------
 ; This routine is the main entry point of the program
 ; --------------------------------------------------
 progStart
     jsr initArithmetic
-    jsr selectIterationDepth
+
+    +printStr .TXT_SELECT
+.inputSelect
+    ; Inital menu
+    jsr waitForKey
+    cmp #49                            ; 1. pressed?
+    beq .startLoad                     ; yes
+    cmp #50                            ; 2. pressed?
+    bne .inputSelect                   ; No => try again
+
+    jsr selectIterationDepth           ; user did not want to load a picure
+    bra .restart
+
+    ; load a picture
+.startLoad
+    jsr loadPicture
+    cmp #DISK_IO_OK
+    beq .doShowAfterLoad               ; do nothing if load failed 
+    rts
+.doShowAfterLoad      
+    jsr bitMapOn                       ; This also clears Video RAM
+    jsr restoreHiresData               ; Move loaded data to video RAM
+    jsr waitForKey
+    sta .INTERRUPTED                   ; simulate a key press during a calculation
+    bra .testInterrupted
 
 .restart
     jsr bitMapOn                       ; This also clears Video RAM
+
 .continuePic
     jsr mandelLoop
 
+.testInterrupted
     lda .INTERRUPTED
     beq .waitMandel
     cmp #KEY_DO_ZOOM                   ; F5 was pressed => Let user select a new section and zoom level
     bne .showInfo                      ; Aother key was pressed
 
 .doZoomIn
-    jsr showZoomRect
-    jsr .processZoomResult
+    jsr showZoomRect                   ; Perform selection of zoomed in section
+    jsr .processZoomResult             ; Modify state and start values for calculation
     stz .INTERRUPTED
-    jmp .restart
-.showInfo
-    jsr saveHiresData
+    jmp .restart                       ; restart calculation with new values
+.showInfo                              ; show info about values used for calculation
+    jsr saveHiresData                  ; save bitmap in banked RAM
     jsr bitMapOff
-    jsr .printLastValues
+    jsr .printLastValues               ; print current values
     +printStr .TXT_CONTINUE
     jsr waitForKey
     cmp #13
-    bne .endMandel
+    bne .endMandel                     ; stop if user pressed another key than return
     jsr bitMapOn
-    jsr restoreHiresData
+    jsr restoreHiresData               ; restore bitmap from banked RAM
     jmp .continuePic
 
-.waitMandel
+.waitMandel                            ; we get here when user interrupts a calculation by a key press
+    jsr saveHiresData                  ; save current picture for good measure
     jsr waitForKey
     cmp #KEY_DO_ZOOM
-    beq .doZoomIn
+    beq .doZoomIn                      ; Let user select a zoomed section, if F5 was pressed    
+    pha
     jsr bitMapOff
-    jsr .printLastValues
+    pla
+    cmp #KEY_DO_SAVE
+    bne .infoOnly
+    jsr savePicture                    ; save picture if user pressed F7. No error check. The routine generates error messages
+.infoOnly
+    jsr .printLastValues               ; print info about values used for calculation
 .endMandel
-    stz .INTERRUPTED
+    stz .INTERRUPTED                   ; Make program forget that it was interrupted => calculation starts anew after running it again
     rts
 
 } else {

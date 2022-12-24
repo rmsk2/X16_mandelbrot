@@ -1,0 +1,333 @@
+
+
+DISK_IO_OK = 0
+DISK_IO_ERR = 1
+SETNAM = $FFBD
+SETLFS = $FFBA
+OPEN = $FFC0
+LOAD = $FFD5
+CLOSE = $FFC3
+CLRCHN = $FFCC
+SAVE = $FFD8
+CHKIN = $FFC6
+READST = $FFB7
+CHRIN = $FFCF
+CHKOUT = $FFC9
+
+; Device number used for load and save
+DEVICE_NUM
+!byte 8
+
+; Contains error number of disk operation
+DISK_ERROR
+!byte 0
+
+
+!macro openChannelNoFileName .fileNum, .addrDeviceNum, .secondaryAddress {
+    ldx .addrDeviceNum
+    ldy #.secondaryAddress
+    +load16BitImmediate OPEN_FILE_NAME_EMPTY, IO_PTR3
+    lda #.fileNum
+    jsr openChannel
+}
+
+
+!macro openChannel .fileNum, .addrDeviceNum, .secondaryAddress, .addrFileName {
+    ldx .addrDeviceNum
+    ldy #.secondaryAddress
+    +load16BitImmediate .addrFileName, IO_PTR3
+    lda #.fileNum
+    jsr openChannel
+}
+
+
+ERR_BYTE_COUNTER
+!byte $00
+ERROR_MSG_BUFFER
+!byte $00, $00, $00, $00, $00, $00, $00, $00
+!byte $00, $00, $00, $00, $00, $00, $00, $00
+!byte $00, $00, $00, $00, $00, $00, $00, $00
+!byte $00, $00, $00, $00, $00, $00, $00, $00
+; --------------------------------------------------
+; readErrorChannel Reads the current drive status. This can lock up
+; if device DEVICE_NUM is not present
+; 
+; INPUT:  None
+; OUTPUT: error code in accu.
+; --------------------------------------------------
+readErrorChannel
+    ; reset previous error
+    lda #DISK_IO_OK
+    sta DISK_ERROR
+
+    ; set error code to "00", ie OK
+    lda #48
+    sta ERROR_MSG_BUFFER
+    sta ERROR_MSG_BUFFER + 1
+
+    ; open 15,DEVICE_NUM,15
+    +openChannelNoFileName 15, DEVICE_NUM, 15
+    bcs .checkError                   ; open failed
+
+    ldx #15
+    jsr CHKIN                         ; use file 15 as input
+
+    lda #0
+    sta ERR_BYTE_COUNTER             ; set buffer index to 0
+.loopErrorChannel
+    jsr READST                        ; read status word
+    bne .close                        ; test for eof/error
+    jsr CHRIN                         ; read character from error channel
+    ldx ERR_BYTE_COUNTER
+    cpx #32                           ; have we exhausted the buffer size?
+    beq .loopErrorChannel             ; yes => do not store the received byte, but continue to read in order to drain error channel
+    sta ERROR_MSG_BUFFER, X           ; there is room left in the buffer => store byte
+    inx                               ; advance index to next storage location
+    stx ERR_BYTE_COUNTER
+    jmp .loopErrorChannel             ; read next byte
+
+.close 
+    lda #15                           
+    jsr CLOSE                         ; close file 15
+.endWithoutClose                       
+    jsr CLRCHN                        ; restore default input and output channels
+
+    rts
+.checkError
+    ; room for additional error handling
+    lda #DISK_IO_ERR
+    sta DISK_ERROR
+    jmp .endWithoutClose              
+
+
+; --------------------------------------------------
+; readAndevalErrorChannel Reads the current drive status and evaluates the
+; returned message. This can lock up if device DEVICE_NUM is not present.
+; 
+; INPUT:  None
+; OUTPUT: error code in accu. This value is also saved in DISK_ERROR.
+; --------------------------------------------------
+readAndEvalErrorChannel
+    jsr readErrorChannel
+    lda DISK_ERROR
+    bne .doneEvalErr
+    lda #<ERROR_MSG_BUFFER
+    sta IO_PTR
+    lda #>ERROR_MSG_BUFFER
+    sta IO_PTR+1
+    jsr asciiToByte
+    sta DISK_ERROR
+    rts
+.doneEvalErr
+    ; truncate error message string as it may be corrupt
+    lda #0
+    sta ERR_BYTE_COUNTER
+
+    rts
+
+
+.ERR_CODE_CONV_HELP
+!byte $00
+; --------------------------------------------------
+; asciiToByte converts the two digit string referenced via IO_PTR 
+; to a numeric value that is stored in the accu
+; 
+; INPUT:  IO_PTR is set to buffer
+; OUTPUT: Numeric value in accu
+; --------------------------------------------------
+asciiToByte
+    ldy #0
+    lda (IO_PTR), y
+    sec
+    sbc #48
+    tax                              ; save value of first char
+    asl
+    asl              
+    asl                              ; accu = accu * 8
+    sta .ERR_CODE_CONV_HELP
+    txa                              ; restore original value
+    asl                              ; accu = accu * 2 
+    clc
+    adc .ERR_CODE_CONV_HELP          ; accu now contains value of first digit
+    sta .ERR_CODE_CONV_HELP          ; store original_value * 8 + original_value * 2 = original_value * 10 
+    iny
+    lda (IO_PTR), y
+    sec
+    sbc #48                          ; add value of second digit
+    clc
+    adc .ERR_CODE_CONV_HELP
+    clc
+
+    rts
+
+
+; --------------------------------------------------
+; X has to contain file number
+; .addrPtr has to point to input buffer
+;  --------------------------------------------------
+!macro readDataRaw .addrBufferLen, .addrBufferCounter, .addrPtr {
+    +load16BitImmediate 0, .addrBufferCounter
+    jsr CHKIN
+    bcs .readError
+
+.readLoopM
+    +cmp16Bit .addrBufferLen, .addrBufferCounter
+    beq .endReachedM
+
+    jsr CHRIN                                      ; read one byte
+    bcs .readError
+    pha
+    jsr READST                                     ; end reached or error?
+    and #%10111111                                 ; mask out bit 6 = 64 => Ignore EOF
+    bne .readErrorRestoreStack
+    pla
+    ldy #0
+    sta (.addrPtr), y                              ; store byte in buffer
+    +inc16Bit .addrBufferCounter
+    +inc16Bit .addrPtr
+    jmp .readLoopM
+
+.endReachedM
+    jsr CLRCHN
+    lda #DISK_IO_OK
+    jmp .endReadDataM
+.readErrorRestoreStack
+    pla
+.readError
+    jsr CLRCHN                                    ; revert to default input and output channels
+    lda #DISK_IO_ERR
+.endReadDataM  
+}
+
+; --------------------------------------------------
+; X has to contain file number
+; .addrPtr has to point to output buffer
+;  --------------------------------------------------
+!macro writeDataRaw .addrBufferLen, .addrBufferCounter, .addrPtr {
+    +load16BitImmediate 0, .addrBufferCounter      ; clear output counter
+    jsr CHKOUT                                     ; use .chan as output channel
+    bcs .errorWrite
+
+.loopWrite
+    +cmp16Bit .addrBufferLen, .addrBufferCounter
+    beq .writeDataDone
+    ldy #0
+    lda (.addrPtr), y
+    jsr CHAROUT
+    bcs .errorWrite
+    +inc16Bit .addrBufferCounter
+    +inc16Bit .addrPtr
+    jmp .loopWrite
+
+.errorWrite
+    jsr CLRCHN
+    lda #DISK_IO_ERR
+    jmp .writeFinished
+.writeDataDone    
+    jsr CLRCHN
+    lda #DISK_IO_OK 
+.writeFinished
+}
+
+
+WBUFFER_LEN
+!byte 0,0
+WBUFFER_COUNTER                           ; counter used for output
+!byte 0,0
+; --------------------------------------------------
+; write a data buffer of length BUFFER_LEN pointed to by IO_PTR2
+; to the file number contained in X register. Exactly WBUFFER_LEN bytes are written.
+;
+; return DISK_OK_OK in accu if everything is OK
+; --------------------------------------------------
+writeBufferCall
+    +writeDataRaw WBUFFER_LEN, WBUFFER_COUNTER, IO_PTR2
+    rts
+
+
+!macro writeBufferAddr .fileNum, .bufferAddr, .bufferLenAddr {
+    +move16Bit .bufferLenAddr, WBUFFER_LEN
+    +load16BitImmediate .bufferAddr, IO_PTR2
+    ldx #.fileNum
+    jsr writeBufferCall
+} 
+
+RBUFFER_LEN
+!byte 0,0
+RBUFFER_COUNTER                          ; counter used for input
+!byte 0,0
+; --------------------------------------------------
+; read data into a data buffer pointed to by IO_PTR2 of length RBUFFER_LEN 
+; from the file number contained in X register. Exactly RBUFFER_LEN bytes are read.
+;
+; return DISK_OK_OK in accu if everything is OK
+; --------------------------------------------------
+readBufferCall
+    +readDataRaw RBUFFER_LEN, RBUFFER_COUNTER, IO_PTR2
+    rts
+
+
+!macro readBufferAddr .fileNum, .bufferAddr, .bufferLenAddr {
+    +move16Bit .bufferLenAddr, RBUFFER_LEN
+    +load16BitImmediate .bufferAddr, IO_PTR2
+    ldx #.fileNum
+    jsr readBufferCall
+}
+
+OPEN_FILE_NAME_EMPTY
+!byte 0
+.OPEN_FILE_NUM
+!byte 0
+.OPEN_DEVICE_NUM
+!byte 0
+.OPEN_SECONDARY_ADDRESS
+!byte 0
+.OPEN_FILE_NAME_HELP
+!byte 0,0
+.OPEN_FILE_NAME_LEN
+!byte 0
+; --------------------------------------------------
+; open a channel with the number given in accu for the device specified in X
+; and the secondary address in given in Y. IO_PTR3 has to reference the file name.
+; If the string referenced by IO_PTR3 is empty no file name is used.  
+;
+; If carry is clear everything went OK
+; --------------------------------------------------
+openChannel
+    sta .OPEN_FILE_NUM
+    stx .OPEN_DEVICE_NUM
+    sty .OPEN_SECONDARY_ADDRESS
+
+    ; load file name length
+    ldy #0
+    lda (IO_PTR3), Y
+    bne .fileNameNonZero
+    lda #0                            ; no file name
+    ldx #0
+    ldy #0
+    jmp .setName
+.fileNameNonZero
+    sta .OPEN_FILE_NAME_LEN
+    +move16Bit IO_PTR3, .OPEN_FILE_NAME_HELP
+    +inc16Bit .OPEN_FILE_NAME_HELP
+    ldx .OPEN_FILE_NAME_HELP
+    ldy .OPEN_FILE_NAME_HELP+1
+    lda .OPEN_FILE_NAME_LEN
+.setName
+    jsr SETNAM
+    lda .OPEN_FILE_NUM                         ; logical file number 15
+    ldx .OPEN_DEVICE_NUM                       ; device number
+    ldy .OPEN_SECONDARY_ADDRESS                ; secondary address 15
+    jsr SETLFS
+
+    jsr OPEN                                   ; open channel
+    php
+    bcs .errorOpen
+    plp
+    rts
+.errorOpen
+    lda .OPEN_FILE_NUM                           
+    jsr CLOSE                                  ; close file even if open failed
+    plp                                        ; restore status register
+    rts
+

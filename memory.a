@@ -84,10 +84,10 @@ SAVED_VERA_STATE
 .TARGET_BANK_NUM
 !byte 0
 
-.NUM_FULL_BANKS
+.CONST_NUM_FULL_BANKS
 !byte 9
 
-.BLOCKS_IN_LAST_BANK
+.CONST_BLOCKS_IN_LAST_BANK
 !byte 12
 
 .FULL_BANK_COUNT
@@ -119,7 +119,7 @@ saveHiresData
     inc .TARGET_BANK_NUM
     inc .FULL_BANK_COUNT
     lda .FULL_BANK_COUNT
-    cmp .NUM_FULL_BANKS
+    cmp .CONST_NUM_FULL_BANKS
     beq .lastBlockRead
     bra .saveLoopRead
 .lastBlockRead
@@ -149,7 +149,7 @@ restoreHiresData
     inc .TARGET_BANK_NUM
     inc .FULL_BANK_COUNT
     lda .FULL_BANK_COUNT
-    cmp .NUM_FULL_BANKS
+    cmp .CONST_NUM_FULL_BANKS
     beq .lastBlockWrite
     bra .saveLoopWrite
 .lastBlockWrite
@@ -158,4 +158,185 @@ restoreHiresData
 
     +loadVeraRegisters SAVED_VERA_STATE
 
+    rts
+
+
+.IO_FILE_NUM = 1
+
+.TXT_ERROR_OPEN
+!byte 20
+!tx "UNABLE TO OPEN FILE"
+!byte 13
+
+.TXT_ERROR_WRITE
+!byte 21
+!tx "UNABLE TO WRITE FILE"
+!byte 13
+
+.TXT_SAVE_OK
+!byte 23
+!tx "FILE SAVED SUCCESFULLY"
+!byte 13
+
+.TXT_ERROR_LOAD
+!byte 20
+!tx "UNABLE TO LOAD FILE"
+!byte 13
+
+.TXT_LAOD_OK
+!byte 24
+!tx "FILE LOADED SUCCESFULLY"
+!byte 13
+
+
+.CONST_BANK_SIZE
+!byte 00, $20
+
+.CONST_LAST_BANK_SIZE
+!byte 00, $0C
+
+.CONST_PARAM_SIZE
+!byte 22, 0
+
+MAX_FILE_NAME_LENGTH = 16
+
+FILE_NAME_SAVE_LOAD
+!byte MAX_FILE_NAME_LENGTH
+!byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+
+.PREFIX_OVERWRITE
+!byte 3
+!tx "@0:"
+.POSTFIX_SEQ
+!byte 4
+!tx ",S,W"
+
+.POSTFIX_SEQ_READ
+!byte 4
+!tx ",S,R"
+
+
+.WRITE_FILE_NAME
+!byte 30
+!byte 0,0,0,0,0,0,0,0,0,0
+!byte 0,0,0,0,0,0,0,0,0,0
+!byte 0,0,0,0,0,0,0,0,0,0
+
+; --------------------------------------------------
+; This routine saves the cached video RAM data and the calculation parameters
+; to a file on disk. The file name has to be specified as a string at address
+; FILE_NAME_SAVE_LOAD.
+;
+;
+; This routine returns DISK_IO_OK in accu if no error occurred.
+; --------------------------------------------------
+saveHiresDataToDisk
+    +strCpy .PREFIX_OVERWRITE, .WRITE_FILE_NAME
+    +strCat FILE_NAME_SAVE_LOAD, .WRITE_FILE_NAME
+    +strCat .POSTFIX_SEQ, .WRITE_FILE_NAME
+
+    +openChannel .IO_FILE_NUM, DEVICE_NUM, 5, .WRITE_FILE_NAME
+    bcc .openOK
+    jmp .showErrorOpen
+.openOK
+    lda #32 
+    sta .TARGET_BANK_NUM
+    stz .FULL_BANK_COUNT
+
+.saveDiskLoopWrite
+    +setBank .TARGET_BANK_NUM
+    +writeBufferAddr .IO_FILE_NUM, $A000, .CONST_BANK_SIZE
+    cmp #DISK_IO_OK
+    bne .showErrorWriteAndClose
+    inc .TARGET_BANK_NUM
+    inc .FULL_BANK_COUNT
+    lda .FULL_BANK_COUNT
+    cmp .CONST_NUM_FULL_BANKS
+    beq .lastBlockDiskWrite
+    bra .saveDiskLoopWrite
+
+.lastBlockDiskWrite
+    +setBank .TARGET_BANK_NUM
+    +writeBufferAddr .IO_FILE_NUM, $A000, .CONST_LAST_BANK_SIZE
+    cmp #DISK_IO_OK
+    bne .showErrorWriteAndClose
+
+    +writeBufferAddr .IO_FILE_NUM, STEP_X, .CONST_PARAM_SIZE
+    cmp #DISK_IO_OK
+    bne .showErrorWriteAndClose
+
+    lda #.IO_FILE_NUM
+    jsr CLOSE
+    +printStr .TXT_SAVE_OK
+    lda #DISK_IO_OK
+    rts
+.showErrorWriteAndClose
+    lda #.IO_FILE_NUM
+    jsr CLOSE
+    +printStr .TXT_ERROR_WRITE
+    lda #DISK_IO_ERR
+    rts
+.showErrorOpen
+    +printStr .TXT_ERROR_OPEN
+    lda #DISK_IO_ERR
+    rts
+
+
+.READ_FILE_NAME
+!byte 30
+!byte 0,0,0,0,0,0,0,0,0,0
+!byte 0,0,0,0,0,0,0,0,0,0
+!byte 0,0,0,0,0,0,0,0,0,0
+
+; --------------------------------------------------
+; This routine loads data from disk into the cached video RAM data and the 
+; calculation parameters. The file name has to be specified as a string at 
+; address FILE_NAME_SAVE_LOAD.
+;
+; This routine returns DISK_IO_OK in accu if no error occurred.
+; --------------------------------------------------
+loadHiresDataFromDisk
+    +strCpy FILE_NAME_SAVE_LOAD, .READ_FILE_NAME
+    +strCat .POSTFIX_SEQ_READ, .READ_FILE_NAME
+
+    +openChannel .IO_FILE_NUM, DEVICE_NUM, 5, .READ_FILE_NAME
+    bcc .openLoadOK
+    jmp .showErrorOpen
+.openLoadOK
+    lda #32 
+    sta .TARGET_BANK_NUM
+    stz .FULL_BANK_COUNT
+
+.loadDiskLoopWrite
+    +setBank .TARGET_BANK_NUM
+    +readBufferAddr .IO_FILE_NUM, $A000, .CONST_BANK_SIZE
+    cmp #DISK_IO_OK
+    bne .showErrorLoadAndClose
+    inc .TARGET_BANK_NUM
+    inc .FULL_BANK_COUNT
+    lda .FULL_BANK_COUNT
+    cmp .CONST_NUM_FULL_BANKS
+    beq .lastBlockDiskLoad
+    bra .loadDiskLoopWrite
+
+.lastBlockDiskLoad
+    +setBank .TARGET_BANK_NUM
+    +readBufferAddr .IO_FILE_NUM, $A000, .CONST_LAST_BANK_SIZE
+    cmp #DISK_IO_OK
+    bne .showErrorLoadAndClose
+
+    +readBufferAddr .IO_FILE_NUM, STEP_X, .CONST_PARAM_SIZE
+    cmp #DISK_IO_OK
+    bne .showErrorLoadAndClose
+
+    lda #.IO_FILE_NUM
+    jsr CLOSE
+    +printStr .TXT_LAOD_OK
+    lda #DISK_IO_OK
+    rts
+.showErrorLoadAndClose
+    lda #.IO_FILE_NUM
+    jsr CLOSE
+    +printStr .TXT_ERROR_LOAD
+    lda #DISK_IO_ERR
     rts
