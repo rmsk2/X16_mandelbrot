@@ -59,6 +59,8 @@ The cursor keys can be used to move a rectangular frame of reversed pixels over 
 represents the currently selected new section. `F1` and  `F3` can be used to change the size of that frame. 
 Pressing return starts the calculation of the selected subsection.
 
+![](/zoom_frame.png?raw=true "Zooming in action")
+
 Zooming in essence halves the stepping width in X and Y direction and increases the so called zoom level by one. 
 As this software uses fixed point arithmetic this results in a loss of accuracy which at a certain point can 
 lead to visual artifacts in the form of spuriously colored pixels. In experiments these artifacts started to 
