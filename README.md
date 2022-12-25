@@ -24,7 +24,7 @@ your machine. Under Linux the makefile should run without changes as long as ACM
 
 # About my motivation for writing this program
 
-Why does someone write a program (in machine language) for an 8-bit microprocessor which is nowadys only 
+Why does someone write a program (in machine language) for an 8-bit microprocessor that is nowadys only 
 used in small embedded systems, that offers functionality which is on several levels (performance, 
 visual appeal, ...) orders of magnitude worse than software written for the same purpose for modern 
 systems? And on top of that the computer that the program is designed to run on does only exist to
