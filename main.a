@@ -1,7 +1,7 @@
 !to "mandelbr.prg", cbm
 !cpu 65c02
 
-TESTS = 1
+;TESTS = 1
 
 *=$0801
 !byte $0c,$08,$e6,$07,$9e,$20,$32,$30,$36,$32,$00,$00,$00
@@ -25,6 +25,8 @@ jmp progStart
 !zone string
 !source "string.a"
 
+; The emulator has to be started with the -rtc option for 
+; these routines to work
 !zone rtc
 !source "rtc.a"
 
