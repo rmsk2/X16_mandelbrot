@@ -1,7 +1,7 @@
 !to "mandelbr.prg", cbm
 !cpu 65c02
 
-;TESTS = 1
+TESTS = 1
 
 *=$0801
 !byte $0c,$08,$e6,$07,$9e,$20,$32,$30,$36,$32,$00,$00,$00
@@ -24,6 +24,9 @@ jmp progStart
 
 !zone string
 !source "string.a"
+
+!zone rtc
+!source "rtc.a"
 
 !zone disk_io
 !source "disk_io.a"
@@ -637,7 +640,7 @@ handlePicDone
 progStart
     jsr initArithmetic
     +printStr .TXT_SELECT
-    stz .INTERRUPTED
+    stz .INTERRUPTED                   ; clean up possible residue from a previous program execution
 
 .inputSelect
     ; Handle inital menu

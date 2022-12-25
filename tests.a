@@ -226,6 +226,13 @@ TEXT_CARRY_SET
 
 ; --------------------------------------------------
 
+.TXT_READING_RTC
+!byte 12
+!tx "READING RTC"
+!byte 13
+
+; --------------------------------------------------
+
 
 testMain
     +perfTestCompare isEqual32Bit, .TEST_VAL_1, .TEST_VAL_2, .TEXT_EQUAL_1
@@ -257,7 +264,15 @@ testMain
 ; --------------------------------------------------    
     +perfTest mul32BitUnsignedInt, .VAL_1_MUL_3, .VAL_2_MUL_3, .TEXT_MUL_3
     +expectValue .VAL_2_MUL_3, .MUL_3_RES 
-; --------------------------------------------------    
+; --------------------------------------------------
+RTC_TEST
+    +printStr .TXT_READING_RTC
+    jsr getTimeCall
+    +printByteLN RTC_HOURS
+    +printByteLN RTC_MINUTES
+    +printByteLN RTC_SECONDS
+
+; -------------------------------------------------- 
 
 testEnd
     rts

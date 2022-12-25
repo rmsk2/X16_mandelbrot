@@ -1,0 +1,21 @@
+GETTIME = $FF50
+
+RTC
+RTC_SECONDS
+!byte 0
+RTC_MINUTES
+!byte 0
+RTC_HOURS
+!byte 0
+
+
+getTimeCall
+    jsr GETTIME
+    lda $05
+    sta RTC_HOURS
+    lda $06
+    sta RTC_MINUTES
+    lda $07
+    sta RTC_SECONDS
+
+    rts
