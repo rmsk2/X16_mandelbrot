@@ -659,7 +659,6 @@ progStart
     jsr resetParametersHires
 .useCurrent
     jsr selectIterationDepth           ; let user select iteration depth
-
 .restart
     jsr bitMapOn                       ; This also clears Video RAM
 .continuePic
