@@ -41,7 +41,7 @@ the 80ies or 90ies.
 # Using the program
 
 When you start the program you can select whether you want 1. to load a picture and its corresponding values, 2. 
-use the current values or 3. reset to the default values. An option is selected by pressing the corresponding
+use the current values, 3. reset to the default values or 4. exit again. An option is selected by pressing the corresponding
 number. Alternatives 2. and 3. differ in the fact that 2. reuses the current calculation parameters which are
 still present in RAM as long as you do not reset the computer. This can for instance be utilized to redraw a picture 
 with an increased iteration depth. The iteration depth can be set after selecting option 1. or 2.
@@ -89,7 +89,8 @@ suffers visibly. Here an example of this effect at zoom level 12 and an iteratio
 
 # Limitations at the moment
 
-- Loading and saving pictures only works with a mounted SD-card image. I am at the moment not sure if I can do anything about that.
+- Loading and saving pictures only works with a mounted SD-card image. I am at the moment not sure if there is anything
+I can do about that.
 - As I do not have access to real hardware and therefore have to use the X16 emulator it is not 100% sure that the program
 performs in the same way on a real machine
 - I have not yet tested whether my fixed point math routines are actually faster than the floating point routines
