@@ -327,12 +327,12 @@ mandelLoop
 !tx "IMAGINARY PART : $"
 
 .TXT_ZOOM_LEVEL
-!byte 18
-!tx "ZOOM LEVEL     : $"
+!byte 17
+!tx "ZOOM LEVEL     : "
 
 .TXT_ITERATION_DEPTH
-!byte 18
-!tx "ITERATION DEPTH: $"
+!byte 17
+!tx "ITERATION DEPTH: "
 
 .TXT_STEPPING_X
 !byte 18
@@ -372,6 +372,10 @@ mandelLoop
     rts
 
 
+.STR_CONV
+!byte 3
+!byte 0,0,0
+
 ; --------------------------------------------------
 ; This routine prints the upper left corner as real and imaginary part, 
 ; the zoom level and the iteration depth and allows to recreate the picture
@@ -386,9 +390,13 @@ mandelLoop
     +printStr .TXT_IMAGINARY_PART
     +printFixedPoint INIT_IMAG
     +printStr .TXT_ZOOM_LEVEL
-    +printByteLN ZOOM_LEVEL
+    +itoa ZOOM_LEVEL, .STR_CONV
+    +printStr .STR_CONV
+    jsr printCRLF
     +printStr .TXT_ITERATION_DEPTH
-    +printByteLN MAX_ITER
+    +itoa MAX_ITER, .STR_CONV
+    +printStr .STR_CONV
+    jsr printCRLF
     +printStr .TXT_STEPPING_X
     +printFixedPoint STEP_X
     +printStr .TXT_STEPPING_Y
