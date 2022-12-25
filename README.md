@@ -45,7 +45,7 @@ When you start the program you can select whether you want 1. to load a picture 
 use the current values, 3. reset to the default values or 4. exit again. An option is selected by pressing the corresponding
 number. Alternatives 2. and 3. differ in the fact that 2. reuses the current calculation parameters which are
 still present in RAM as long as you do not reset the computer. This can for instance be utilized to redraw a picture 
-with an increased iteration depth. The iteration depth can be set after selecting option 1. or 2.
+with an increased iteration depth. The iteration depth can be set after selecting option 2. or 3.
 
 When you select option 1. the picture data and its associated parameters are loaded into RAM and then shown
 on the screen. You can zoom into the picture by pressing `F5` (see *Zooming into the Mandelbrot set*) below or 

@@ -343,11 +343,11 @@ mandelLoop
 !tx "STEP Y         : $"
 
 .TXT_CONTINUE
-!byte 50
+!byte 56
 !byte 13
-!tx "PRESS RETURN TO CONTINUE." 
+!tx "PRESS RETURN TO QUIT."
 !byte 13
-!tx "ANY OTHER KEY TO QUIT."
+!tx "PRESS ANY OTHER KEY TO CONTINUE." 
 !byte 13
 
 ; --------------------------------------------------
@@ -581,7 +581,7 @@ showCalcNoSaveHires
     +printStr .TXT_CONTINUE
     jsr waitForKey
     cmp #13                            ; user pressed return?
-    bne .endShowContinue               ; No => Tell caller user wants to stop 
+    beq .endShowContinue               ; Yes => Tell caller user wants to stop 
     jsr bitMapOn
     jsr restoreHiresData               ; restore bitmap from banked RAM    
     lda #CONST_CONTINUE
