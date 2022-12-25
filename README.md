@@ -54,7 +54,7 @@ you can look at the parameters by pressing any other key.
 When you select option 2. or 3. a new picture is calculated. The calculation can be interrupted at any time
 by pressing a key. If that key is `F5` you can zoom into the Mandelbrot set (see corresponding section below).
 When any other key is pressed the parameters used for calculation are presented. If you then press `RETURN` the
-calculation is continued. Any other key terminates the program.
+calculation is stopped. Any other key resumes the calculation.
 
 If all calculations for a picture have been performed the program waits for a key press. You can press `F5` 
 to zoom further into the set (see below) or press `F7` to save the picture on SD card. If you press any other 
