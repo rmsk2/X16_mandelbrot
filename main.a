@@ -575,6 +575,7 @@ CONST_FINISH = 0
 ; --------------------------------------------------
 showCalcParameters
     jsr saveHiresData                  ; save bitmap in banked RAM
+showCalcNoSaveHires
     jsr bitMapOff
     jsr .printLastValues               ; print current values
     +printStr .TXT_CONTINUE
@@ -625,7 +626,9 @@ handlePicDone
     jsr printCRLF
     rts
 .showValuesAtEnd
-    jsr .printLastValues               ; print info about values used for calculation   
+    jsr showCalcNoSaveHires            ; print info about values used for calculation   
+    cmp #CONST_CONTINUE
+    beq .checkForKeyPress
     rts
 
 ; --------------------------------------------------
