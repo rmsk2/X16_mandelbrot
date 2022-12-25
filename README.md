@@ -15,10 +15,11 @@ Of course the biggest part of the speedup stems from the fact that the 65C02 in 
 the 6510 in a C64 is clocked at 1MHz. But even if that is taken into account the X16 version is currently 
 about 25% faster.
 
-You need the ACME macro assembler to assemble the program. Use the `LOAD "FILENAME"` command followed
-by `RUN` to start the program. Under MacOS you have to set the variable `MAC` (use `make MAC=1`) when 
-calling the makefile and you have to adapt the variables `ACME` and `WORKDIR` to reflect the situation on 
-your machine. Under Linux the makefile should run without changes as long as ACME is in your `PATH`.
+You need the ACME macro assembler to assemble the program. A makefile is provided to build the software. 
+Use the `LOAD "FILENAME"` command followed by `RUN` to start the program once it is loaded. Under MacOS you 
+have to set the variable `MAC` (use `make MAC=1`) when calling the makefile and you have to adapt the variables 
+`ACME` and `WORKDIR` to reflect the situation on your machine. Under Linux the makefile should run without 
+changes as long as ACME is in your `PATH`.
 
 ![](/result.png?raw=true "Example picture in hires mode")
 

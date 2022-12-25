@@ -463,8 +463,8 @@ selectIterationDepth
 
 
 ALLOWED_FILE_CHARS
-!byte 37
-!tx "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789."
+!byte 38
+!tx "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ."
 
 ; --------------------------------------------------
 ; This routine saves a picture and the corresponding parameters to disk
@@ -570,7 +570,7 @@ progStart
     lda .INTERRUPTED
     beq .waitMandel
     cmp #KEY_DO_ZOOM                   ; F5 was pressed => Let user select a new section and zoom level
-    bne .showInfo                      ; Aother key was pressed
+    bne .showInfo                      ; Another key was pressed
 
 .doZoomIn
     jsr showZoomRect                   ; Perform selection of zoomed in section
