@@ -233,6 +233,17 @@ TEXT_CARRY_SET
 
 ; --------------------------------------------------
 
+.TXT_READING_RTC_I2C
+!byte 20
+!tx "READING RTC VIA I2C"
+!byte 13
+
+.TXT_ERROR_I2C
+!byte 10
+!tx "I2C ERROR"
+!byte 13
+
+; --------------------------------------------------
 
 testMain
     +perfTestCompare isEqual32Bit, .TEST_VAL_1, .TEST_VAL_2, .TEXT_EQUAL_1
@@ -265,13 +276,21 @@ testMain
     +perfTest mul32BitUnsignedInt, .VAL_1_MUL_3, .VAL_2_MUL_3, .TEXT_MUL_3
     +expectValue .VAL_2_MUL_3, .MUL_3_RES 
 ; --------------------------------------------------
-RTC_TEST
     +printStr .TXT_READING_RTC
     jsr getTimeCall
     +printByteLN RTC_HOURS
     +printByteLN RTC_MINUTES
     +printByteLN RTC_SECONDS
-
+; -------------------------------------------------- 
+    +printStr .TXT_READING_RTC_I2C
+    jsr getTimeI2C
+    bcc .evalI2C
+    +printStr .TXT_ERROR_I2C
+    jmp testEnd
+.evalI2C
+    +printByteLN RTCI2C+2
+    +printByteLN RTCI2C+1
+    +printByteLN RTCI2C
 ; -------------------------------------------------- 
 
 testEnd

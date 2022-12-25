@@ -1,4 +1,6 @@
 GETTIME = $FF50
+I2CREADBYTE = $FEC6
+I2C_DEV = $6F
 
 RTC
 RTC_SECONDS
@@ -8,6 +10,26 @@ RTC_MINUTES
 RTC_HOURS
 !byte 0
 
+RTCI2C
+!byte 0,0,0
+
+!macro readI2c .byteOffset {
+    ldx #I2C_DEV
+    ldy #.byteOffset
+    jsr I2CREADBYTE
+    bcs i2cError
+    sta RTCI2C + .byteOffset
+}
+
+getTimeI2C  
+    +readI2c 0
+    lda RTCI2C
+    and #%01111111
+    sta RTCI2C
+    +readI2c 1
+    +readI2c 2
+i2cError
+    rts
 
 getTimeCall
     jsr GETTIME
