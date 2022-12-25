@@ -69,6 +69,7 @@ select the new section:
 |Cursor Keys | Move upper left corner of new section |
 | `F1` | Zoom in |
 | `F3` | Zoom out |
+| `F2`| Abort selection | 
 | `RETURN` | Start calculation of new section |
 
 The cursor keys can be used to move a rectangular frame of reversed pixels over the visualization. The frame

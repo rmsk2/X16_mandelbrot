@@ -512,40 +512,27 @@ loadPicture
     rts
 
 .TXT_SELECT
-!byte 60
+!byte 68
 !tx "1. LOAD PICTURE"
 !byte 13
 !tx "2. USE CURRENT VALUES"
 !byte 13
 !tx "3. USE DEFAULT VALUES"
 !byte 13
-
+!tx "4. EXIT"
+!byte 13
 
 ; --------------------------------------------------
-; This routine is the main entry point of the program
+; This routine loads a picture, shows it and handles keyboard input
+; for zooming in and showing values. If the user decides to zoom into
+; the picture this routine jumps (jmp(!!)) into the main routine.
+; The main routine therefore calls loadAndShowPicture also with a jmp
+; in order to keep the stack clean. This also means that if this routine
+; executes rts the program ends.
+; 
+; The routine has no return values.
 ; --------------------------------------------------
-progStart
-    jsr initArithmetic
-
-    +printStr .TXT_SELECT
-.inputSelect
-    ; Inital menu
-    jsr waitForKey
-    cmp #49                            ; 1. pressed?
-    beq .startLoad                     ; yes
-    cmp #50                            ; 2. pressed?
-    beq .useCurrent                    ; yes
-    cmp #51                            ; 3. pressed?
-    bne .inputSelect                   ; No => try again
-
-    ; 3 was pressed
-    jsr resetParametersHires
-.useCurrent
-    jsr selectIterationDepth           ; let user select iteration depth
-    bra .restart
-
-    ; load a picture
-.startLoad
+loadAndShowPicture
     jsr loadPicture
     cmp #DISK_IO_OK
     beq .doShowAfterLoad               ; do nothing if load failed 
@@ -556,55 +543,147 @@ progStart
 .doShowAfterLoad      
     jsr bitMapOn                       ; This also clears Video RAM
     jsr restoreHiresData               ; Move loaded data to video RAM
+.waitForCommand
     jsr waitForKey
-    sta .INTERRUPTED                   ; simulate a key press during a calculation
-    bra .testInterrupted
-
-.restart
-    jsr bitMapOn                       ; This also clears Video RAM
-
-.continuePic
-    jsr mandelLoop
-
-.testInterrupted
-    lda .INTERRUPTED
-    beq .waitMandel
-    cmp #KEY_DO_ZOOM                   ; F5 was pressed => Let user select a new section and zoom level
-    bne .showInfo                      ; Another key was pressed
-
-.doZoomIn
-    jsr showZoomRect                   ; Perform selection of zoomed in section
-    jsr .processZoomResult             ; Modify state and start values for calculation
+    cmp #KEY_DO_ZOOM
+    bne .showValues
+    ;
     stz .INTERRUPTED
-    jmp .restart                       ; restart calculation with new values
-.showInfo                              ; show info about values used for calculation
+    jsr showZoomRect                   ; Perform selection of zoomed in section
+    lda ZOOM_RESULT
+    cmp #ZOOM_ESCAPE                   ; Did user cancel the operation?
+    beq .waitForCommand                ; Yes, User escaped from zoom selection
+    jsr .processZoomResult             ; Modify state and start values for calculation
+    jmp .restart                       ; draw visualization
+.showValues
+    stz .INTERRUPTED
+    jsr showCalcParameters
+    cmp #CONST_CONTINUE                ; Does user want to end the program?
+    beq .waitForCommand                ; No => continue showing picture
+    rts
+
+
+CONST_CONTINUE = 1
+CONST_FINISH = 0
+
+; --------------------------------------------------
+; This routine shows the values used for calculation.
+; 
+; It returns CONST_CONTINUE in the accu if the user has chosen to
+; continue the program and CONST_FINISH in case the user
+; wants to end the program.
+; --------------------------------------------------
+showCalcParameters
     jsr saveHiresData                  ; save bitmap in banked RAM
     jsr bitMapOff
     jsr .printLastValues               ; print current values
     +printStr .TXT_CONTINUE
     jsr waitForKey
-    cmp #13
-    bne .endMandel                     ; stop if user pressed another key than return
+    cmp #13                            ; user pressed return?
+    bne .endShowContinue               ; No => Tell caller user wants to stop 
     jsr bitMapOn
-    jsr restoreHiresData               ; restore bitmap from banked RAM
-    jmp .continuePic
+    jsr restoreHiresData               ; restore bitmap from banked RAM    
+    lda #CONST_CONTINUE
+    rts
+.endShowContinue
+    lda #CONST_FINISH
+    rts
 
-.waitMandel                            ; we get here when user interrupts a calculation by a key press
-    jsr saveHiresData                  ; save current picture for good measure
+
+; --------------------------------------------------
+; This routine handles the UI operations that occur after the calculation
+; has ended. If the user decides to zoom into the picture this routine jumps
+; (jmp(!!)) into the main routine. The main routine therefore calls 
+; loadAndShowPicture also with a jmp in order to keep the stack clean. 
+; This also means that if this routine executes rts the program ends.
+; 
+; The routine has no return values.
+; --------------------------------------------------
+handlePicDone
+    jsr saveHiresData                  ; save current picture in banked RAM
+    
+.checkForKeyPress
     jsr waitForKey
     cmp #KEY_DO_ZOOM
-    beq .doZoomIn                      ; Let user select a zoomed section, if F5 was pressed    
-    pha
-    jsr bitMapOff
-    pla
+    bne .checkForSave
+    ; try to zoom in
+    jsr showZoomRect                   ; Perform selection of zoomed in section
+    lda ZOOM_RESULT
+    cmp #ZOOM_ESCAPE  
+    beq .checkForKeyPress              ; User has aborted zoom selection
+    ; user has selected a new section
+    jsr .processZoomResult
+    jmp .restart
+.checkForSave
     cmp #KEY_DO_SAVE
-    bne .infoOnly
+    bne .showValuesAtEnd
+
+    jsr bitMapOff
     jsr savePicture                    ; save picture if user pressed F7. No error check. The routine generates error messages
     jsr readAndEvalErrorChannel        ; read error channel
     +printStr ERR_BYTE_COUNTER         ; print error message
     jsr printCRLF
-.infoOnly
-    jsr .printLastValues               ; print info about values used for calculation
+    rts
+.showValuesAtEnd
+    jsr .printLastValues               ; print info about values used for calculation   
+    rts
+
+; --------------------------------------------------
+; This routine is the main entry point of the program
+; --------------------------------------------------
+progStart
+    jsr initArithmetic
+    +printStr .TXT_SELECT
+    stz .INTERRUPTED
+
+.inputSelect
+    ; Handle inital menu
+    jsr waitForKey
+    cmp #49                            ; 1. pressed?
+    bne .checkFor2                     ; No
+    jmp loadAndShowPicture             ; yes => load and show picture
+.checkFor2
+    cmp #50                            ; 2. pressed?
+    beq .useCurrent                    ; yes
+    cmp #51                            ; 3. pressed?
+    beq .resetCalcParms                ; yes
+    cmp #52                            ; 4. pressed ?
+    bne .inputSelect                   ; No => try again
+    ; 4. was pressed
+    rts
+
+.resetCalcParms
+    jsr resetParametersHires
+.useCurrent
+    jsr selectIterationDepth           ; let user select iteration depth
+
+.restart
+    jsr bitMapOn                       ; This also clears Video RAM
+.continuePic
+    jsr mandelLoop
+
+.testInterrupted
+    lda .INTERRUPTED
+    beq .picDone                       ; user did not interrupt => picture is done
+    cmp #KEY_DO_ZOOM                   ; F5 was pressed => Let user select a new section and zoom level
+    bne .showInfo                      ; Another key was pressed
+
+.doZoomIn
+    jsr showZoomRect                   ; Perform selection of zoomed in section
+    lda ZOOM_RESULT
+    cmp #ZOOM_ESCAPE                   ; Did user cancel the operation?
+    beq .continuePic                   ; Yes, User escaped from zoom selection
+    jsr .processZoomResult             ; Modify state and start values for calculation
+    stz .INTERRUPTED
+    jmp .restart                       ; restart calculation with new values
+.showInfo                              ; show info about values used for calculation
+    jsr showCalcParameters
+    cmp #CONST_FINISH
+    beq .endMandel
+    jmp .continuePic                   
+
+.picDone                                ; handle UI stuff after calculation is done
+    jmp handlePicDone
 .endMandel
     stz .INTERRUPTED                   ; Make program forget that it was interrupted => calculation starts anew after running it again
     rts

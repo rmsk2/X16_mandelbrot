@@ -10,8 +10,9 @@ CURSOR_DOWN = $11
 CURSOR_RIGHT = $1D
 CURSOR_LEFT = $9d
 KEY_RETURN = $0d
-ZOOM_IN = $85
-ZOOM_OUT = $86
+ZOOM_IN = $85;F1
+ZOOM_OUT = $86;F3
+ESCAPE = $89; F2
 
 ; --------------------------------------------------
 ; This macro generates code for turning on the auto increment
@@ -109,6 +110,7 @@ bitMapOn
     clc
     jsr screen_mode      
     bcs .endErrInit      ; carry is set on error
+initVeraRegisters
     +selectDataPort0
     +setVRAMStart
     +autoIncOn
@@ -299,7 +301,7 @@ resetZoomRectDefault
     sta ZOOM_DIFF
     rts
 
-MAX_ZOOM_DIFF = 5
+MAX_ZOOM_DIFF = 4
 
 ZOOM_DIFF
 !byte 0
@@ -360,14 +362,25 @@ drawZoomRect
 
     rts
 
+ZOOM_OK = 0
+ZOOM_ESCAPE = 1
+
+ZOOM_RESULT
+!byte ZOOM_OK
+
 ; --------------------------------------------------
 ; This routine allows to select a new subsection of the Mandelbrot set for
 ; visualization. 
 ; 
 ; The selected pixel and additional zoom levels can be read from ZOOM_X_POS, 
-; ZOOM_Y_POS and ZOOM_DIFF as soon as the subroutine has returned.
+; ZOOM_Y_POS and ZOOM_DIFF as soon as the subroutine has returned. The address
+; ZOOM_RESULT contains ZOOK_OK if the selection was finished and ZOOM_ESCAPE
+; if the user cancelled the action.
 ; --------------------------------------------------
 showZoomRect
+    +saveVeraRegisters SAVED_VERA_STATE
+    lda #ZOOM_OUT
+    sta ZOOM_RESULT
     jsr resetZoomRectDefault
     jsr drawZoomRect
 .commandLoop
@@ -474,8 +487,17 @@ showZoomRect
     jmp .commandLoop
 .checkReturn
     cmp #KEY_RETURN
-    ; Handle Return key
-    beq .zoomDone                                               ; Return was pressed => End selection     
+    bne .checkEscape
+    bra .zoomDone                                               ; Return was pressed => End selection     
+.checkEscape
+    cmp #ESCAPE
+    bne .skipEscape
+    jsr drawZoomRect
+    lda #ZOOM_ESCAPE
+    sta ZOOM_RESULT
+    bra .zoomDone
+.skipEscape
     jmp .commandLoop
 .zoomDone
+    +loadVeraRegisters SAVED_VERA_STATE
     rts
