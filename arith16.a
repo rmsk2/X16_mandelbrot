@@ -67,6 +67,20 @@ USE_MUL_TABLE = 1
 }
 
 ; --------------------------------------------------
+; sub16BitImmediate subtracts the value .value from the value stored at the
+; address .memAddr2. The result is stored in .memAddr2
+; --------------------------------------------------
+!macro sub16BitImmediate .value, .memAddr2 {
+    sec
+    lda .memAddr2
+    sbc #<.value
+    sta .memAddr2
+    lda .memAddr2+1
+    sbc #>.value
+    sta .memAddr2+1
+}
+
+; --------------------------------------------------
 ; add16Bit implements a 16 bit add of the values stored at memAddr1 and memAddr2 
 ; The result is stored in .memAddr2
 ; --------------------------------------------------

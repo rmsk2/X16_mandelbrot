@@ -2,17 +2,12 @@ GETTIME = $FF50
 I2CREADBYTE = $FEC6
 I2C_DEV = $6F
 
-RTC
-RTC_SECONDS
-!byte 0
-RTC_MINUTES
-!byte 0
-RTC_HOURS
-!byte 0
-
 RTCI2C
 !byte 0,0,0
 
+; --------------------------------------------------
+; This macro reads a byte from the RTCs registers via the I2C-bus.
+; --------------------------------------------------
 !macro readI2c .byteOffset {
     ldx #I2C_DEV
     ldy #.byteOffset
@@ -21,23 +16,420 @@ RTCI2C
     sta RTCI2C + .byteOffset
 }
 
+!macro cmpTime .addr1, .addr2 {
+    +load16BitImmediate .addr1, TEMP_PTR
+    +load16BitImmediate .addr2, TEMP_PTR2
+    jsr cmpTimeI2cCall
+}
+
+; --------------------------------------------------
+; This routine compares two I2C time stamps. The addresses of the timestamps
+; have to be given through TEMP_PTR and TEMP_PTR2. 
+;
+; Zero flag is set if the two values are equal. Carry is set if
+; the value to which TEMP_PTR points is larger or equal than the one to which 
+; TEMP_PTR2 points.
+; --------------------------------------------------
+cmpTimeI2cCall
+    sed                                     ; switch to bcd mode
+    ldy #2
+    php                                     ; initialize loop
+.cmpLoop    
+    plp                                     ; throw previous comparison result away
+    lda (TEMP_PTR),y 
+    cmp (TEMP_PTR2), y                      ; perform comparison
+    bne .cmpDone                            ; if we found a difference we are done
+    php                                     ; save flags at this point as they contain potentially the end result
+    dey             
+    bpl .cmpLoop                            ; decrease and check looping values, if neccessary look at next values 
+    plp                                     ; restore result of last comparison. It is the end result
+.cmpDone
+    cld                                     ; switch back to binary mode
+    rts
+
+!macro diffTimeSimple .addr1, .addr2 {
+    +load16BitImmediate .addr1, TEMP_PTR
+    +load16BitImmediate .addr2, TEMP_PTR2
+    jsr diffTimeSimpleCall
+}
+
+!macro addTimeSimple .addr1, .addr2 {
+    +load16BitImmediate .addr1, TEMP_PTR
+    +load16BitImmediate .addr2, TEMP_PTR2
+    jsr addTimeSimpleCall
+}
+
+; --------------------------------------------------
+; This macro calculates A + X mod N
+; 
+; It returns result in accu. Carry is set if an overflow occured.
+; --------------------------------------------------
+!macro addModN .modulus {
+    sta ARG1
+    stz ARG1 +  1
+    stx ARG2
+    stz ARG2 + 1
+    +add16Bit ARG1, ARG2
+    +cmp16BitImmediate .modulus, ARG2
+    beq .reduce
+    bcs .clearCarryNoReduce
+.reduce
+    +sub16BitImmediate .modulus, ARG2 
+    sec
+.addDone
+    lda ARG2
+    rts
+.clearCarryNoReduce
+    clc
+    bra .addDone
+}
+
+ARG1
+!byte 0, 0
+ARG2
+!byte 0, 0
+TEMP_MODN
+!byte 0, 0
+MOD_N_TEMP
+!byte 0
+; --------------------------------------------------
+; This macro calculates A - X mod N
+; 
+; It returns result in accu. Carry is set if an underflow occured.
+; --------------------------------------------------
+!macro subModN .modulus {
+    sta ARG1
+    stz ARG1 + 1 
+    stx ARG2
+    stz ARG2 + 1
+
+    ; determine if there is an underflow
+    stz MOD_N_TEMP
+    lda ARG2
+    cmp ARG1
+    beq .startCalc                      ; values are equal => carry has to be clear
+    bcc .startCalc 
+    inc MOD_N_TEMP
+
+    ; perform subtraction
+.startCalc
+    ; negate .ARG2 mod .modulus, i.e. calculate .modulus - ARG2
+    +load16BitImmediate .modulus, TEMP_MODN
+    ; TEMP_MODN = TEMP_MODN - ARG2
+    +sub16Bit ARG2, TEMP_MODN
+
+    ; add .ARG1 to the negated value
+    +move16Bit TEMP_MODN, ARG2
+    +add16Bit ARG1, ARG2
+
+    +cmp16BitImmediate .modulus, ARG2
+    beq .reduceSub
+    bcs .doneSubN                       
+    ; reduce mod .modulus
+    ; .modulus >= ARG2
+    ; ARG2 = ARG2 - .modulus
+.reduceSub
+    +sub16BitImmediate .modulus, ARG2
+.doneSubN
+    clc
+    lda MOD_N_TEMP
+    beq .finishSubN
+    sec
+.finishSubN
+    lda ARG2
+}
+
+
+; --------------------------------------------------
+; This routine calculates A + X mod $60
+; 
+; It returns the result in the accu. Carry is set if an overflow occured.
+; --------------------------------------------------
+addMod60Call
+    +addModN $60
+    rts
+
+
+; --------------------------------------------------
+; This macro calculates A - X mod $60
+; 
+; It returns the result in the accu. Carry is set if an underflow occured.
+; --------------------------------------------------
+subMod60Call
+    +subModN $60
+    rts
+
+
+; --------------------------------------------------
+; This routine calculates A - 1 mod $60
+; 
+; It returns result in accu. Carry is set if an underflow occured.
+; --------------------------------------------------
+decMod60
+    ldx #1
+    jsr subMod60Call
+    rts
+  
+
+; --------------------------------------------------
+; This routine calculates A +1 mod $60
+; 
+; It returns result in accu. Carry is set if an overflow occured.
+; --------------------------------------------------
+incMod60
+    ldx #1
+    jsr addMod60Call
+    rts
+
+
+.TIME_UNDERFLOW_MINUTES
+!byte 0
+.TIME_UNDERFLOW_HOURS
+!byte 0
+.TIME_TEMP
+!byte 0
+
+; --------------------------------------------------
+; This routine calculates the time span between two given time stamps.
+; The time stamps have to be referenced by TMP_PTR and TEMP_PTR2 respectively.
+; This routine subtracts the value of *TEMP_PTR from *TEMP_PTR2. The
+; result is stored in *TEMP_PTR2. It assumes *TEMP_PTR2 >= *TEMP_PTR.
+; --------------------------------------------------
+diffTimeSimpleCall
+    sed                                                         ; set BCD mode
+    ldy #0
+    stz .TIME_UNDERFLOW_MINUTES
+    stz .TIME_UNDERFLOW_HOURS
+
+    ; process seconds
+    lda (TEMP_PTR2), y
+    tax                                                         ; TEMP_PTR2 in X
+    lda (TEMP_PTR), y                                           ; TEMP_PTR in A
+    jsr subMod60Call                                            ; A = A -X mod 60
+    sta (TEMP_PTR2), y                                          ; save new seconds in TEMP_PTR2
+    bcc .noUnderflowSeconds
+    inc .TIME_UNDERFLOW_MINUTES                                 ; record underflow
+.noUnderflowSeconds
+    ; process minutes
+    iny
+    lda (TEMP_PTR), y                                           ; accu contains minutes of TEMP_PTR
+    ldx .TIME_UNDERFLOW_MINUTES
+    beq .noUnderflowMinutes                                     ; was there an underflow?
+    ; process underflow from seconds
+;underflowSub    
+    jsr decMod60                                                ; yes => subtract underflow A = A - 1 mod 60
+    bcc .noUnderflowMinutes                                     ; have we generated an underflow in the hours?
+    inc .TIME_UNDERFLOW_HOURS                                   ; yes, we have!
+.noUnderflowMinutes
+    ; now process minutes
+    sta .TIME_TEMP                                              ; store minutes of TEMP_PTR (perhaps decremented due to underflow)
+    lda (TEMP_PTR2), y                                          ; load minutes of TEMP_PTR2
+    tax                                                         ; minutes of TEMP_PTR2 are in X
+    lda .TIME_TEMP                                              ; minutes of TEMP_PTR are in A
+;regularSub
+    jsr subMod60Call                                            ; A = A - X mod 60
+    sta (TEMP_PTR2), y                                          ; save new minutes in TEMP_PTR2
+    bcc .noHourUnderflow
+    ; Either line underflowSub or line regularSub but not both can generate an underflow.
+    ; Reasoning: If line underflowSub created an underflow the minutes are at 59
+    ; before line regularSub. And from that value we subtract at most 59, so no 
+    ; additional underflow can occur
+    inc .TIME_UNDERFLOW_HOURS                                   
+
+.noHourUnderflow
+    ; process hours
+    iny 
+    sec
+    lda (TEMP_PTR), y                                          
+    sbc (TEMP_PTR2), y                                          ; Hours of TEMP_PTR in A
+    ldx .TIME_UNDERFLOW_HOURS                                   ; Subtract TEMP_PTR2 from A
+    beq .storeResult                                            ; no underflow => we are nearly done
+    dec                                                         ; A = A - 1 Take underflow into account.
+.storeResult
+    sta (TEMP_PTR2), y                                          ; write result for hours
+    cld                                                         ; set binary mode
+    rts
+
+
+; --------------------------------------------------
+; This routine calculates adds the given time intervals.
+; The interval have to be referenced by TMP_PTR and TEMP_PTR2 respectively.
+; This routine add the value of *TEMP_PTR to *TEMP_PTR2. The
+; result is stored in *TEMP_PTR2.
+; --------------------------------------------------
+addTimeSimpleCall
+    sed                                                         ; set BCD mode
+
+    ldy #0
+    stz .TIME_UNDERFLOW_MINUTES
+    stz .TIME_UNDERFLOW_HOURS
+
+    ; process seconds
+    lda (TEMP_PTR2), y                                          
+    tax                                                         ; TEMP_PTR2 => X
+    lda (TEMP_PTR), y                                           ; TEMP_PTR => A
+    jsr addMod60Call                                            ; A = A + X mod $60
+    bcc .noOverflowSec
+    inc .TIME_UNDERFLOW_MINUTES                                 ; yes I know, this should be overflow not underflow ....
+.noOverflowSec
+    sta (TEMP_PTR2), y                                          ; store result for seconds
+
+    ; process minutes
+    iny
+    lda (TEMP_PTR2),y                                           ; TEMP_PTR2 in A
+    ldx .TIME_UNDERFLOW_MINUTES 
+    beq .noMinutesOverflow                                      ; checkForOveflow  
+;overflowAdd
+    jsr incMod60                                                ; Overflow occurred increment A
+    bcc .noMinutesOverflow                                      ; Did this create an overflow for the hours?
+    inc .TIME_UNDERFLOW_HOURS                                   ; yes
+.noMinutesOverflow
+    tax                                                         ; TEMP_PTR2 => X
+    lda (TEMP_PTR), y                                           ; TEMP_PTR => A
+;normalAdd
+    jsr addMod60Call                                            ; A = A + X mod $60
+    sta (TEMP_PTR2), y
+    bcc .noHoursOverflow                                        ; did an overflow occur?
+    inc .TIME_UNDERFLOW_HOURS                                   ; yes
+
+.noHoursOverflow    
+    ; process hours
+    ; In argument that mirrors sunbtraction only line
+    ; overflowAdd or line normalAdd but not both can
+    ; result in an overflow 
+
+    iny
+    clc
+    lda (TEMP_PTR2), y 
+    adc (TEMP_PTR), y
+    ldx .TIME_UNDERFLOW_HOURS
+    beq .noAdditionalOverflow
+    inc
+.noAdditionalOverflow
+    sta (TEMP_PTR2), y
+
+    cld                                                         ; back to binary
+    rts
+
+
+; --------------------------------------------------
+; This routine calculates the time interval between two given time stamps.
+; The time stamps have to be referenced by TMP_PTR and TEMP_PTR2 respectively.
+; This routine subtracts the value of *TEMP_PTR2 from *TEMP_PTR. The
+; result is stored in *TEMP_PTR2. It correctly handles the case where a time interval
+; wraps around at midnight.
+; --------------------------------------------------
+timeDiffCall   
+    sed
+
+    cld
+    rts
+
+; --------------------------------------------------
+; This routine reads the current time from the built in Real Time Clock.
+; It does that by accessing the device directly via the I2C-bus and not via
+; the corresponding Kernal call.
+;
+; After calling this routine the current time is stored at the three
+; bytes at RTCI2C. First byte is seconds, the second is minutes and the
+; third is hors. The values are BCD. Upon return the carry is set if
+; an error occurred.
+; --------------------------------------------------
 getTimeI2C  
     +readI2c 0
     lda RTCI2C
-    and #%01111111
+    and #%01111111                           ; bit eight in the seconds register is some flag we don't care about
     sta RTCI2C
     +readI2c 1
     +readI2c 2
 i2cError
     rts
 
-getTimeCall
-    jsr GETTIME
-    lda $05
-    sta RTC_HOURS
-    lda $06
-    sta RTC_MINUTES
-    lda $07
-    sta RTC_SECONDS
+.BTOX_TEMP
+!byte 0
+
+.HEX_NIBBLE_LO
+!byte 0
+
+.HEX_NIBBLE_HI
+!byte 0
+
+; --------------------------------------------------
+; This routine splits a byte into nibbles and returns the nibbles
+; as hex digits in the memory locations .HEX_NIBBLE_LO/HI
+; --------------------------------------------------
+btox
+    jsr splitByte
+    stx .BTOX_TEMP
+    tax
+    lda HEX_CHARS, X
+    sta .HEX_NIBBLE_HI
+
+    ldx .BTOX_TEMP
+    lda HEX_CHARS, X
+    sta .HEX_NIBBLE_LO
+    rts
+
+!macro getTimeStr .targetAddr, .srcAddr {
+    +load16BitImmediate .targetAddr, TEMP_PTR
+    +load16BitImmediate .srcAddr, TEMP_PTR2
+    jsr getTimeStrCall
+}
+
+; --------------------------------------------------
+; This routine returns the time as read from the RTC as a string. The 
+; address of the receiving string has to be specified through 
+; TEMP_PTR/TEMP_PTR + 1. The string has to have room for at least 8 characters.
+; The three bytes that are evaluated have to be referenced by TEMP_PTR2/
+; TEMP_PTR2 + 1 and have to be BCD.
+; 
+; This routine does not return an error.
+; --------------------------------------------------
+getTimeStrCall
+    jsr getTimeI2C                            ; ignore error. Should not happen anyway as the device number is correct.
+
+formatTimeStr    
+    ; process seconds
+    ldy #8
+    lda (TEMP_PTR2)                           ; load seconds as BCD value
+    jsr btox        
+    lda .HEX_NIBBLE_LO
+    sta (TEMP_PTR), y
+    dey
+    lda .HEX_NIBBLE_HI
+    sta (TEMP_PTR), y
+    dey
+    lda #58                                   ; save colon
+    sta (TEMP_PTR), y
+
+    ; process minutes
+    +inc16Bit TEMP_PTR2
+    dey
+    lda (TEMP_PTR2)                           ; load minutes as BCD value
+    jsr btox    
+    lda .HEX_NIBBLE_LO
+    sta (TEMP_PTR), y
+    dey
+    lda .HEX_NIBBLE_HI
+    sta (TEMP_PTR), y
+    dey
+    lda #58                                   ; save colon
+    sta (TEMP_PTR), y
+
+    ; process hours
+    +inc16Bit TEMP_PTR2
+    dey 
+    lda (TEMP_PTR2)                           ; load hours as BCD value
+    jsr btox    
+    lda .HEX_NIBBLE_LO
+    sta (TEMP_PTR), y
+    dey
+    lda .HEX_NIBBLE_HI
+    sta (TEMP_PTR), y
+
+    ; write length byte at position 0
+    dey
+    lda #8
+    sta (TEMP_PTR),y 
 
     rts

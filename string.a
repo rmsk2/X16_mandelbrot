@@ -112,6 +112,12 @@ waitForKey
     rts               ; ASCII Code of pressed key is now in accumulator
 
 
+; --------------------------------------------------
+; Check if key is pressed and return ASCII Code of key in Accumulator or
+; 0 if no key was pressed.
+; 
+; The zero flag is cleared if a key was pressed.
+; --------------------------------------------------
 checkKey
     jsr GETIN         ; get key from keyboard
     cmp #0            ; if 0, no key pressed
