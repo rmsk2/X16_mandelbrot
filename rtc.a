@@ -261,10 +261,9 @@ diffTimeSimpleCall
 
 
 ; --------------------------------------------------
-; This routine calculates adds the given time intervals.
-; The interval have to be referenced by TMP_PTR and TEMP_PTR2 respectively.
-; This routine add the value of *TEMP_PTR to *TEMP_PTR2. The
-; result is stored in *TEMP_PTR2.
+; This routine adds the given time intervals. The interval have to be 
+; referenced by TMP_PTR and TEMP_PTR2 respectively. This routine add the 
+; value of *TEMP_PTR to *TEMP_PTR2. The result is stored in *TEMP_PTR2.
 ; --------------------------------------------------
 addTimeSimpleCall
     sed                                                         ; set BCD mode
@@ -381,10 +380,13 @@ diffTimeCall
     bcs .wrapAround                            ; *TEMP_PTR >= *TEMP_PTR2 => wrap around                                
 .noWrapAround                                  ; *TEMP_PTR < *TEMP_PTR2 => no wrap around
     +copyTsIndirect TEMP_PTR, .HELP_TS1
-    +copyTsIndirect TEMP_PTR2, .HELP_TS2
-    +diffTimeSimple .HELP_TS2, .HELP_TS1
+    +copyTsIndirect TEMP_PTR2, .HELP_TS2    
+    +diffTimeSimple .HELP_TS2, .HELP_TS1       ; Calculate time diff with reversed parameters to fulfill preconditon of diffTimeSimpleCall
+
+    ; restore pointers
     +move16Bit .TEMP_PTR, TEMP_PTR
     +move16Bit .TEMP_PTR2, TEMP_PTR2
+    
     ; result is in .HELP_TS1 => copy to *TEMP_PTR2
     ldy #0
     lda .HELP_TS1
@@ -403,13 +405,16 @@ diffTimeCall
     +copyTs .CONST_TS_MIDNIGHT, .HELP_INTERVAL_UNTIL_MIDNIGHT
     +copyTsIndirect TEMP_PTR, .HELP_TS2
    
+    ; .HELP_TS2 = .HELP_INTERVAL_UNTIL_MIDNIGHT - .HELP_TS2 = 24:00:00 - *TEMP_PTR
     +diffTimeSimple .HELP_INTERVAL_UNTIL_MIDNIGHT, .HELP_TS2
+    
+    ; *TEMP_PTR2 = .HELP_TS2 + *TEMP_PTR2
     +move16Bit .TEMP_PTR2, TEMP_PTR2
     +load16BitImmediate .HELP_TS2, TEMP_PTR
-   
     jsr addTimeSimpleCall
+
+    ; restore pointers
     +move16Bit .TEMP_PTR, TEMP_PTR
-    +move16Bit .TEMP_PTR2, TEMP_PTR2
 
     rts
 
