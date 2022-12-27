@@ -5,16 +5,6 @@ I2C_DEV = $6F
 RTCI2C
 !byte 0,0,0
 
-; --------------------------------------------------
-; This macro reads a byte from the RTCs registers via the I2C-bus.
-; --------------------------------------------------
-!macro readI2c .byteOffset {
-    ldx #I2C_DEV
-    ldy #.byteOffset
-    jsr I2CREADBYTE
-    bcs i2cError
-    sta RTCI2C + .byteOffset
-}
 
 !macro cmpTime .addr1, .addr2 {
     +load16BitImmediate .addr1, TEMP_PTR
@@ -343,6 +333,20 @@ addTimeSimpleCall
     sta .target + 2
 }
 
+!macro copyTsIndirectTarget .src, .ptr {
+    ldy #0
+    lda .src
+    sta (.ptr),y
+
+    iny
+    lda .src + 1
+    sta (.ptr),y
+
+    iny
+    lda .src + 2
+    sta (.ptr),y    
+}
+
 .CONST_TS_MIDNIGHT
 !byte 0,0,$24
 
@@ -386,19 +390,9 @@ diffTimeCall
     ; restore pointers
     +move16Bit .TEMP_PTR, TEMP_PTR
     +move16Bit .TEMP_PTR2, TEMP_PTR2
-    
     ; result is in .HELP_TS1 => copy to *TEMP_PTR2
-    ldy #0
-    lda .HELP_TS1
-    sta (TEMP_PTR2),y
+    +copyTsIndirectTarget .HELP_TS1, TEMP_PTR2
 
-    iny
-    lda .HELP_TS1 + 1
-    sta (TEMP_PTR2),y
-
-    iny
-    lda .HELP_TS1 + 2
-    sta (TEMP_PTR2),y
     rts
 .wrapAround
     ; copy time stamps
@@ -418,6 +412,18 @@ diffTimeCall
 
     rts
 
+
+; --------------------------------------------------
+; This macro reads a byte from the RTCs registers via the I2C-bus.
+; --------------------------------------------------
+!macro readI2c .byteOffset {
+    ldx #I2C_DEV
+    ldy #.byteOffset
+    jsr I2CREADBYTE
+    bcs i2cError
+    sta RTCI2C + .byteOffset
+}
+
 ; --------------------------------------------------
 ; This routine reads the current time from the built in Real Time Clock.
 ; It does that by accessing the device directly via the I2C-bus and not via
@@ -428,7 +434,7 @@ diffTimeCall
 ; third is hors. The values are BCD. Upon return the carry is set if
 ; an error occurred.
 ; --------------------------------------------------
-getTimeI2C  
+.getTimeI2C  
     +readI2c 0
     lda RTCI2C
     and #%01111111                           ; bit eight in the seconds register is some flag we don't care about
@@ -437,6 +443,32 @@ getTimeI2C
     +readI2c 2
 i2cError
     rts
+
+
+; --------------------------------------------------
+; This macro allows to fill the target address with a timestamp that
+; holds the current time.
+; --------------------------------------------------
+!macro getTimestamp .targetAddr {
+    +load16BitImmediate .targetAddr, TEMP_PTR
+    jsr getTimeStampCall
+}
+
+; --------------------------------------------------
+; This routine reads the current time from the built in Real Time Clock.
+; It does that by accessing the device directly via the I2C-bus and not via
+; the corresponding Kernal call.
+;
+; After calling this routine the current time is stored at the three
+; bytes to which TEMP_PTR points. First byte is seconds, the second is 
+; minutes and the third is hors. The values are BCD. Upon return the 
+; carry is set if an error occurred.
+; --------------------------------------------------
+getTimeStampCall
+    jsr .getTimeI2C
+    +copyTsIndirectTarget RTCI2C, TEMP_PTR
+    rts
+
 
 .BTOX_TEMP
 !byte 0
@@ -466,7 +498,7 @@ btox
 !macro getTimeStr .targetAddr, .srcAddr {
     +load16BitImmediate .targetAddr, TEMP_PTR
     +load16BitImmediate .srcAddr, TEMP_PTR2
-    jsr getTimeStrCall
+    jsr formatTimeStrCall
 }
 
 ; --------------------------------------------------
@@ -478,10 +510,7 @@ btox
 ; 
 ; This routine does not return an error.
 ; --------------------------------------------------
-getTimeStrCall
-    jsr getTimeI2C                            ; ignore error. Should not happen anyway as the device number is correct.
-
-formatTimeStr    
+formatTimeStrCall    
     ; process seconds
     ldy #8
     lda (TEMP_PTR2)                           ; load seconds as BCD value

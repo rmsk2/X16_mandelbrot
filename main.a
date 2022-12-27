@@ -85,6 +85,13 @@ COUNT_X
 COUNT_Y
 !byte 0
 
+TIMESTAMP_CALC_START
+!byte 0, 0, 0
+
+TIMESTAMP_CALC_END
+!byte 0, 0, 0
+
+
 ; --------------------------------------------------
 ; variables used for calculation
 ; --------------------------------------------------
@@ -381,6 +388,12 @@ mandelLoop
 !byte 3
 !byte 0,0,0
 
+VEC_SPECIAL_PRINT
+!byte 0, 0
+
+.specialWrapper
+    jmp (VEC_SPECIAL_PRINT)
+
 ; --------------------------------------------------
 ; This routine prints the upper left corner as real and imaginary part, 
 ; the zoom level and the iteration depth and allows to recreate the picture
@@ -406,6 +419,7 @@ mandelLoop
     +printFixedPoint STEP_X
     +printStr .TXT_STEPPING_Y
     +printFixedPoint STEP_Y
+    jsr .specialWrapper
 
     rts
 
@@ -562,6 +576,7 @@ loadAndShowPicture
     jmp .restart                       ; draw visualization
 .showValues
     stz .INTERRUPTED
+    +load16BitImmediate .printNothing, VEC_SPECIAL_PRINT
     jsr showCalcParameters
     cmp #CONST_CONTINUE                ; Does user want to end the program?
     beq .waitForCommand                ; No => continue showing picture
@@ -606,6 +621,7 @@ showCalcNoSaveHires
 ; The routine has no return values.
 ; --------------------------------------------------
 handlePicDone
+    +getTimestamp TIMESTAMP_CALC_END
     jsr saveHiresData                  ; save current picture in banked RAM
     
 .checkForKeyPress
@@ -631,9 +647,53 @@ handlePicDone
     jsr printCRLF
     rts
 .showValuesAtEnd
+    +load16BitImmediate .printFinishedTime, VEC_SPECIAL_PRINT
     jsr showCalcNoSaveHires            ; print info about values used for calculation   
     cmp #CONST_CONTINUE
     beq .checkForKeyPress
+    rts
+
+
+TIMESTAMP_RUNNING
+!byte 0, 0, 0
+
+.TXT_TIMESTAMP
+!byte 8
+!byte 0,0,0,0,0,0,0,0
+
+.TXT_RUNNING_TIME
+!byte 17
+!tx "RUNNING FOR    : "
+
+.TXT_FINISHED_TIME
+!byte 17
+!tx "DONE AFTER     : "
+
+
+.printRunningTime
+    +getTimestamp TIMESTAMP_RUNNING
+    +diffTime TIMESTAMP_CALC_START, TIMESTAMP_RUNNING
+    +getTimeStr .TXT_TIMESTAMP, TIMESTAMP_RUNNING
+    +printStr .TXT_RUNNING_TIME
+    +printStr .TXT_TIMESTAMP
+    jsr printCRLF
+    rts
+
+
+.TIMESTAMP_END_TEMP
+!byte 0, 0, 0
+
+.printFinishedTime
+    +copyTs TIMESTAMP_CALC_END, .TIMESTAMP_END_TEMP
+    +diffTime TIMESTAMP_CALC_START, .TIMESTAMP_END_TEMP
+    +getTimeStr .TXT_TIMESTAMP, .TIMESTAMP_END_TEMP
+    +printStr .TXT_FINISHED_TIME
+    +printStr .TXT_TIMESTAMP
+    jsr printCRLF
+    rts
+
+
+.printNothing 
     rts
 
 ; --------------------------------------------------
@@ -665,6 +725,7 @@ progStart
 .useCurrent
     jsr selectIterationDepth           ; let user select iteration depth
 .restart
+    +getTimestamp TIMESTAMP_CALC_START
     jsr bitMapOn                       ; This also clears Video RAM
 .continuePic
     jsr mandelLoop
@@ -684,6 +745,7 @@ progStart
     stz .INTERRUPTED
     jmp .restart                       ; restart calculation with new values
 .showInfo                              ; show info about values used for calculation
+    +load16BitImmediate .printRunningTime, VEC_SPECIAL_PRINT
     jsr showCalcParameters
     cmp #CONST_FINISH
     beq .endMandel
