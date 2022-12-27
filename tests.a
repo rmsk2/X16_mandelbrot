@@ -325,6 +325,34 @@ TEXT_CARRY_SET
 !byte $01, $11, $17
 
 ; --------------------------------------------------
+
+.TXT_TIME8
+!byte 36
+!tx "17:05:32 UNTIL 22:35:02 == 05:29:30" 
+!byte 13
+
+.TIME16
+!byte $32, $05, $17
+.TIME17
+!byte $02, $35, $22
+.TIME18
+!byte $30, $29, $05
+
+; --------------------------------------------------
+
+.TXT_TIME9
+!byte 36
+!tx "22:17:25 UNTIL 00:35:02 == 02:17:37" 
+!byte 13
+
+.TIME19
+!byte $25, $17, $22
+.TIME20
+!byte $02, $35, $00
+.TIME21
+!byte $37, $17, $02
+
+; --------------------------------------------------
 testMain
     +perfTestCompare isEqual32Bit, .TEST_VAL_1, .TEST_VAL_2, .TEXT_EQUAL_1
     +expectUnequal 
@@ -403,7 +431,21 @@ testMain
     jsr printCRLF
     +cmpTime .TIME14, .TIME15
     +expectEqual
-
-
+; --------------------------------------------------
+    +printStr .TXT_TIME8
+    +diffTime .TIME16, .TIME17
+    +getTimeStr .TIME_STR, .TIME17
+    +printStr .TIME_STR
+    jsr printCRLF
+    +cmpTime .TIME18, .TIME17
+    +expectEqual
+; --------------------------------------------------
+    +printStr .TXT_TIME9
+    +diffTime .TIME19, .TIME20
+    +getTimeStr .TIME_STR, .TIME20
+    +printStr .TIME_STR
+    jsr printCRLF
+    +cmpTime .TIME21, .TIME20
+    +expectEqual
 testEnd
     rts
