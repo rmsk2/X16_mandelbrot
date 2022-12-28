@@ -379,7 +379,19 @@ ZOOM_RESULT
 ; --------------------------------------------------
 showZoomRect
     +saveVeraRegisters SAVED_VERA_STATE
-    lda #ZOOM_OUT
+    ; we only can zoom in if the current ZOOM_LEVEL
+    ; is smaller than MAX_ZOOM_LEVEL
+    lda ZOOM_LEVEL
+    cmp #MAX_ZOOM_LEVEL
+    bcc .zoomAllowed
+
+    lda #ZOOM_ESCAPE
+    sta ZOOM_RESULT
+
+    jmp .zoomDone
+
+.zoomAllowed
+    lda #ZOOM_OK
     sta ZOOM_RESULT
     jsr resetZoomRectDefault
     jsr drawZoomRect
@@ -457,7 +469,7 @@ showZoomRect
     clc
     adc ZOOM_DIFF
     cmp #MAX_ZOOM_LEVEL
-    beq .skipZoomIn                                             ; We can only zoom in the maximum number of allowed levels in order to prevent accuracy problems
+    bcs .skipZoomIn                                             ; We can only zoom in the maximum number of allowed levels in order to prevent accuracy problems
 
     ; Zoom in and halve selection frame in size
     inc ZOOM_DIFF
