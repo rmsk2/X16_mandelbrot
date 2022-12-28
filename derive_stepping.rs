@@ -1,4 +1,11 @@
 // ***********************************
+// This program can be used to derive the default stepping width
+// for X16_mandelbrot. It calcuates the the stepping width depending
+// on the section of the complex plane that should be visualized and
+// the resolution of the target machine. The output can be used
+// by the fixed point arithmetic as implemented in the assembly
+// part of the software.
+//
 // Change here for new values
 // ***********************************
 
@@ -11,7 +18,7 @@ const Y_LOWER_RIGHT: f64 = -Y_UPPER_LEFT;
 // Resolution in X and Y direction
 const PIXELS_X: f64 = 320.0;
 const PIXELS_Y: f64 = 240.0;
-// Accuracy in bytes after the comma
+// Accuracy in bytes without the sign byte
 const NUM_FIXED_BYTES: u16 = 4;
 
 fn print_mandel_fixed_point(f_in: f64) {
@@ -31,6 +38,7 @@ fn print_mandel_fixed_point(f_in: f64) {
         bit_count += 1;
     }
 
+    // Also adapt this statement if you change NUM_FIXED_BYTES.
     println!("{:06x}", res);
 }
 

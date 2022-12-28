@@ -91,6 +91,7 @@ drawPoint
     lda NUM_ITER
     cmp MAX_ITER
     beq .plotBlack
+    clc
     adc #47
     sta VERA_DATA_0
     rts
