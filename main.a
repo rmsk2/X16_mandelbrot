@@ -51,7 +51,7 @@ STEP_X
 
 ; Y offset to move in complex plane for next line of picture
 STEP_Y
-!byte 1, $5C, $8F, $02, $00
+!byte 1, $11, $71, $02, $00
 
 ; real part of upper left point of picture
 INIT_REAL
@@ -139,7 +139,7 @@ DEFAULT_STEP_X
 
 ; Y offset to move in complex plane for next line of default picture
 DEFAULT_STEP_Y
-!byte 1, $5C, $8F, $02, $00
+!byte 1, $11, $71, $02, $00
 
 ; real part of upper left point of default picture
 DEFAULT_INIT_REAL
