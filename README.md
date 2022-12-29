@@ -90,7 +90,7 @@ suffers visibly. Here an example of this effect at zoom level 12 and an iteratio
 
 - I thought for a while that the reason for this problem is decreasing accuracy due to the fact that the fixed
 point arithmetic "runs out of usable bits". But increasing the accuracy did not solve the problem and on top of
-that a reimplemantation in Go using the same fixed point approach did not show the artifacts. I am therefore pretty 
+that a reimplementation in Go using the same fixed point approach did not show the artifacts. I am therefore pretty 
 sure a bug remains to be found in this software. 
 - Loading and saving pictures only works with a mounted SD-card image. I am at the moment not sure if there is anything
 I can do about that.
