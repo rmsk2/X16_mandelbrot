@@ -84,11 +84,11 @@ Pressing return starts the calculation of the selected subsection.
 
 - At higher zoom levels artifacts begin to appear in the visualisations. In experiments these artifacts started to 
 show up at zoom level 6 or 7 but did not affect the result overly negative. At zoom level 8 the quality sometimes 
-suffers visibly. Here an example of this effect at zoom level 12 and an iteration depth of 64
+suffers visibly. Here an example of this effect at zoom level 12 and an iteration depth of 64.
 
 ![](/artifacts.png?raw=true "Example picture showing artifacts")
 
-I thought for a while that the reason for this problem is decreasing accuracy due to the fact that the fixed
+- I thought for a while that the reason for this problem is decreasing accuracy due to the fact that the fixed
 point arithmetic "runs out of usable bits". But increasing the accuracy did not solve the problem and on top of
 that a reimplemantation in Go using the same fixed point approach did not show the artifacts. I am therefore pretty 
 sure a bug remains to be found in this software. 
