@@ -480,6 +480,10 @@ selectIterationDepth
 !tx "SAVING ..."
 !byte 13
 
+.TXT_STORE_SD
+!byte 25
+!tx "STORE PICTURE ON SD CARD"
+!byte 13
 
 ALLOWED_FILE_CHARS
 !byte 38
@@ -491,6 +495,7 @@ ALLOWED_FILE_CHARS
 ; It returns DISK_IO_OK if saving was successfull.
 ; --------------------------------------------------
 savePicture
+    +printStr .TXT_STORE_SD
     +printStr .TXT_FILE_NAME
     lda #MAX_FILE_NAME_LENGTH                            ; restore input buffer cpacity
     sta FILE_NAME_SAVE_LOAD
