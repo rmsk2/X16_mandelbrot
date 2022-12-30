@@ -159,14 +159,14 @@ mul32BitUnsigned
     adc TEMP_MUL, y
     sta TEMP_MUL, y
     bcc .noAdditionalCarry
-.carryLoop
+.carryLoop                        ; handle the case where one or more carries to the following digits occur
     iny
     cpy #8                        
     beq .noAdditionalCarry        ; we are beyond the final byte. In this case ignore carry
     lda #1                        ; add carry to intermediate result
     adc TEMP_MUL, y
     sta TEMP_MUL, y
-    bcs .carryLoop                ; Make sure to handle carries in additional digits
+    bcs .carryLoop                ; A carry occurred while adding the last carry => Make sure to handle carries in additional digits
 .noAdditionalCarry
     inc COUNT_L                   ; Move processing to next digit of left operand
     lda COUNT_L
@@ -317,14 +317,14 @@ square32BitUnsigned
     adc TEMP_MUL, y
     sta TEMP_MUL, y
     bcc .noExtraCarrySquare
-.carryLoopSquare    
+.carryLoopSquare                  ; handle the case where one or more carries to the following digits occur
     iny
     cpy #8                        
     beq .noExtraCarrySquare       ; we are beyond the final byte. In this case ignore carry
     lda #1                        ; add carry to intermediate result
     adc TEMP_MUL, y
     sta TEMP_MUL, y
-    bcs .carryLoopSquare
+    bcs .carryLoopSquare          ; Another carry occurred after adding the carry => Let's do this again
 .noExtraCarrySquare
     inc COUNT_L                   ; Move processing to next digit of left operand
     lda COUNT_L

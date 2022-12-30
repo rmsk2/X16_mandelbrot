@@ -391,6 +391,11 @@ mandelLoop
 VEC_SPECIAL_PRINT
 !byte 0, 0
 
+!macro withPrinterCall .func, .printer {
+    +load16BitImmediate .printer, VEC_SPECIAL_PRINT
+    jsr .func
+}
+
 .specialWrapper
     jmp (VEC_SPECIAL_PRINT)
 
@@ -581,8 +586,7 @@ loadAndShowPicture
     jmp .restart                       ; draw visualization
 .showValues
     stz .INTERRUPTED
-    +load16BitImmediate .printNothing, VEC_SPECIAL_PRINT
-    jsr showCalcParameters
+    +withPrinterCall showCalcParameters, .printNothing
     cmp #CONST_CONTINUE                ; Does user want to end the program?
     beq .waitForCommand                ; No => continue showing picture
     rts
@@ -652,8 +656,7 @@ handlePicDone
     jsr printCRLF
     rts
 .showValuesAtEnd
-    +load16BitImmediate .printFinishedTime, VEC_SPECIAL_PRINT
-    jsr showCalcNoSaveHires            ; print info about values used for calculation   
+    +withPrinterCall showCalcNoSaveHires, .printFinishedTime
     cmp #CONST_CONTINUE
     beq .checkForKeyPress
     rts
@@ -706,8 +709,8 @@ TIMESTAMP_RUNNING
 ; --------------------------------------------------
 progStart
     jsr initArithmetic
-    +printStr .TXT_SELECT
     stz .INTERRUPTED                   ; clean up possible residue from a previous program execution
+    +printStr .TXT_SELECT    
 
 .inputSelect
     ; Handle inital menu
@@ -750,8 +753,7 @@ progStart
     stz .INTERRUPTED
     jmp .restart                       ; restart calculation with new values
 .showInfo                              ; show info about values used for calculation
-    +load16BitImmediate .printRunningTime, VEC_SPECIAL_PRINT
-    jsr showCalcParameters
+    +withPrinterCall showCalcParameters, .printRunningTime
     cmp #CONST_FINISH
     beq .endMandel
     jmp .continuePic                   
