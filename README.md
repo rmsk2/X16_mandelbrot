@@ -87,9 +87,8 @@ Pressing return starts the calculation of the selected subsection.
 
 Zooming in one level simply halves the stepping width in the complex plane in both directions. As this software uses
 fixed point arithmentic with 24 bits after the comma this has the consequence that the maximum zoom level is
-limited. In order to leave at least some bits of accuracy it is fixed to 15. The theoretical maximum is 17. On
-zoom level 18 the stepping width in X and Y direction would become zero as the last nonzero bit would have been
-shifted out of the 24 bit "mantissa".
+limited to 16. The theoretical maximum is 17. On zoom level 18 the stepping width in X and Y direction 
+would become zero as the last nonzero bit would have been shifted out of the 24 bit "mantissa".
 
 # Limitations at the moment
 
