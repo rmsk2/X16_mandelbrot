@@ -158,18 +158,16 @@ mul32BitUnsigned
     lda HELP_MUL                  ; add MSB to intermediate result
     adc TEMP_MUL, y
     sta TEMP_MUL, y
-    php                           ; save status register (mostly the carry bit)
+    bcc .noAdditionalCarry
+.carryLoop
     iny
-    ; this comparison destroys the current value of the carry
     cpy #8                        
-    beq .skipIfAtEnd              ; we are beyond the final byte. In this case ignore carry
-    plp                           ; restore flag register, restore original carry bit
-    lda #0                        ; add carry to intermediate result
+    beq .noAdditionalCarry        ; we are beyond the final byte. In this case ignore carry
+    lda #1                        ; add carry to intermediate result
     adc TEMP_MUL, y
     sta TEMP_MUL, y
-    php                           ; push flag register so that we can pull it in the next instruction
-.skipIfAtEnd
-    plp                           ; pull flag register (either pushed before or before comparison)
+    bcs .carryLoop                ; Make sure to handle carries in additional digits
+.noAdditionalCarry
     inc COUNT_L                   ; Move processing to next digit of left operand
     lda COUNT_L
     cmp #4
@@ -318,18 +316,16 @@ square32BitUnsigned
     lda HELP_MUL                  ; add MSB to intermediate result
     adc TEMP_MUL, y
     sta TEMP_MUL, y
-    php                           ; save status register (mostly the carry bit)
+    bcc .noExtraCarrySquare
+.carryLoopSquare    
     iny
-    ; this comparison destroys the current value of the carry
     cpy #8                        
-    beq .skipIfAtEndSquare        ; we are beyond the final byte. In this case ignore carry
-    plp                           ; restore flag register, restore original carry bit
-    lda #0                        ; add carry to intermediate result
+    beq .noExtraCarrySquare       ; we are beyond the final byte. In this case ignore carry
+    lda #1                        ; add carry to intermediate result
     adc TEMP_MUL, y
     sta TEMP_MUL, y
-    php                           ; push flag register so that we can pull it in the next instruction
-.skipIfAtEndSquare
-    plp                           ; pull flag register (either pushed before or before comparison)
+    bcs .carryLoopSquare
+.noExtraCarrySquare
     inc COUNT_L                   ; Move processing to next digit of left operand
     lda COUNT_L
     cmp #4

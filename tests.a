@@ -353,6 +353,61 @@ TEXT_CARRY_SET
 !byte $37, $17, $02
 
 ; --------------------------------------------------
+;-01 45 66 B4
+TEST_INIT_REAL
+!byte 1,$B4,$66,$45,$01
+
+;00 64 B8 0A
+TEST_INIT_IMAG 
+!byte 0,$0A,$B8,$64,$00
+
+; 00 00 04 CC
+TEST_STEP_X 
+!byte 0,$CC,$04,$00,$00
+
+;-00 00 04 E2
+TEST_STEP_Y
+!byte 1,$E2,$04,$00,$00
+
+runOneSequence
+    +callFunc move32Bit, TEST_INIT_REAL, INIT_REAL
+    +callFunc move32Bit, TEST_INIT_IMAG, INIT_IMAG  
+
+    +callFunc move32Bit, TEST_STEP_X, STEP_X
+    +callFunc move32Bit, TEST_STEP_Y, STEP_Y  
+
+    +load16BitImmediate 127, COUNT_X
+    lda #101
+    sta COUNT_Y
+    jsr deriveParametersFromPixel
+
+    +callFunc move32Bit, INIT_REAL, REAL
+    +callFunc move32Bit, INIT_IMAG, IMAG
+    lda #64 
+    sta MAX_ITER
+    jsr calcOneMandelbrotSequence
+    ;lda NUM_ITER
+    ;jsr printByteCRLF
+    rts
+
+; --------------------------------------------------
+
+.TEXT_MUL_BUG
+!byte 35
+!tx "-01.430580 * 00.62CAE0 = -00.7CA817"
+
+.VAL_1_MUL_BUG
+!byte 1,$80,$05,$43,$01
+
+.VAL_2_MUL_BUG
+!byte 0,$E0,$CA,$62,$00
+
+.VAL_3_MUL_BUG
+!byte 1,$17,$A8,$7C,$00
+
+; --------------------------------------------------
+
+
 testMain
     +perfTestCompare isEqual32Bit, .TEST_VAL_1, .TEST_VAL_2, .TEXT_EQUAL_1
     +expectUnequal 
@@ -447,5 +502,12 @@ testMain
     jsr printCRLF
     +cmpTime .TIME21, .TIME20
     +expectEqual
+; --------------------------------------------------
+    ;jsr runOneSequence    
+; --------------------------------------------------
+.mulDebug
+    +perfTest mul32BitNormalized, .VAL_1_MUL_BUG, .VAL_2_MUL_BUG, .TEXT_MUL_BUG
+    +expectValue .VAL_2_MUL_BUG, .VAL_3_MUL_BUG 
+
 testEnd
     rts
