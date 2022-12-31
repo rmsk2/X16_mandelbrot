@@ -63,7 +63,7 @@ TEXT_CARRY_SET
     +callFunc .func, .operL, .operR
 }
 
-!macro expectValue .val, .ref{
+!macro expectValue .val, .ref {
     +callFunc isEqual32Bit, .val, .ref
     beq .testOK
     +printStr TEXT_FAILURE
