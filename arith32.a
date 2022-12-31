@@ -151,7 +151,7 @@ mul32BitUnsigned
     adc COUNT_R                   ; This position is COUNT_L + COUNT_R
     tay                           ; move calculated index to y register
     txa                           ; move LSB of multiplication result to accu
-    clc    
+    ;clc                          ; COUNT_L + COUNT_R does not produce a carry => carry is always clear at this point
     adc TEMP_MUL, y               ; add LSB to intermediate result
     sta TEMP_MUL, y
     iny
@@ -309,7 +309,7 @@ square32BitUnsigned
     adc COUNT_R                   ; This position is COUNT_L + COUNT_R
     tay                           ; move calculated index to y register
     txa                           ; move LSB of multiplication result to accu
-    clc    
+    ;clc                          ; COUNT_L + COUNT_R does not produce a carry => carry is always clear at this point
     adc TEMP_MUL, y               ; add LSB to intermediate result
     sta TEMP_MUL, y
     iny
