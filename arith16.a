@@ -266,8 +266,9 @@ mul16Bit
     lsr
     lsr
     lsr
-    clc
-    adc #$A0
+    ;clc
+    ;adc #$A0
+    ora #$A0                         ; adc and ora are equivalent in this case as the lower 5 bits of $A0 are zero
     sta PRE_PTR_HI
     txa
     tay

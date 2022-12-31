@@ -281,7 +281,7 @@ initMandel
     +load16BitImmediate 0, COUNT_X
     lda #0
     sta COUNT_Y
-    
+
 !ifdef ITER_COUNT {
     +callFuncMono clear32Bit, ITER_CTR
 }    
@@ -737,8 +737,8 @@ TIMESTAMP_RUNNING
 progStart
     jsr initArithmetic
     stz .INTERRUPTED                   ; clean up possible residue from a previous program execution
-    +printStr .TXT_SELECT    
 
+    +printStr .TXT_SELECT    
 .inputSelect
     ; Handle inital menu
     jsr waitForKey
@@ -788,7 +788,7 @@ progStart
 .picDone                                ; handle UI stuff after calculation is done
     jmp handlePicDone
 .endMandel
-    stz .INTERRUPTED                   ; Make program forget that it was interrupted => calculation starts anew after running it again
+    stz .INTERRUPTED                    ; Make program forget that it was interrupted => calculation starts anew after running it again
     rts
 
 } else {
