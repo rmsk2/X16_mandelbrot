@@ -281,6 +281,7 @@ initMandel
     +load16BitImmediate 0, COUNT_X
     lda #0
     sta COUNT_Y
+    
 !ifdef ITER_COUNT {
     +callFuncMono clear32Bit, ITER_CTR
 }    
@@ -444,7 +445,7 @@ VEC_SPECIAL_PRINT
     +printFixedPoint STEP_X
     +printStr .TXT_STEPPING_Y
     +printFixedPoint STEP_Y
-    
+
 !ifdef ITER_COUNT {
     +printStr TXT_ITERATIONS
     +printFixedPoint ITER_CTR
