@@ -2,6 +2,7 @@
 !cpu 65c02
 
 ;TESTS = 1
+;ITER_COUNT = 1
 
 *=$0801
 !byte $0c,$08,$e6,$07,$9e,$20,$32,$30,$36,$32,$00,$00,$00
@@ -68,6 +69,18 @@ ZOOM_LEVEL
 MAX_ITER
 !byte ITER_DEFAULT
 ; **************************************************
+
+!ifdef ITER_COUNT {
+ITER_CTR
+!byte 0, 0, 0, 0, 0
+
+CONST_UINT_ONE
+!byte 0, 1, 0, 0, 0
+
+TXT_ITERATIONS
+!byte 18
+!tx "ITERATIONS     : $"
+}
 
 ; Number of points (resolution) in x direction
 MAX_X
@@ -217,6 +230,10 @@ calcOneMandelbrotSequence
     +callFunc move32Bit, IMAG, YN
 
 .loopMandelbrot
+
+!ifdef ITER_COUNT {
+    +callFunc add32BitUnsigned, CONST_UINT_ONE, ITER_CTR
+}
     jsr testMandelbrotDone
     beq .continueMandelbrot
     jmp .endMandelbrot
@@ -264,6 +281,9 @@ initMandel
     +load16BitImmediate 0, COUNT_X
     lda #0
     sta COUNT_Y
+!ifdef ITER_COUNT {
+    +callFuncMono clear32Bit, ITER_CTR
+}    
     ; reset complex numbers
     +callFunc move32Bit, INIT_REAL, REAL
     +callFunc move32Bit, INIT_IMAG, IMAG
@@ -424,6 +444,12 @@ VEC_SPECIAL_PRINT
     +printFixedPoint STEP_X
     +printStr .TXT_STEPPING_Y
     +printFixedPoint STEP_Y
+    
+!ifdef ITER_COUNT {
+    +printStr TXT_ITERATIONS
+    +printFixedPoint ITER_CTR
+}
+
     jsr .specialWrapper
 
     rts
