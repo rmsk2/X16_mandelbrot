@@ -164,7 +164,7 @@ mul32BitUnsigned
     cpy #8                        
     beq .noAdditionalCarry        ; we are beyond the final byte. In this case ignore carry
     lda #1                        ; add carry to intermediate result
-    adc TEMP_MUL, y
+    adc TEMP_MUL, y               ; due to the cpy #8 above the carry is always clear at this instruction
     sta TEMP_MUL, y
     bcs .carryLoop                ; A carry occurred while adding the last carry => Make sure to handle carries in additional digits
 .noAdditionalCarry
@@ -322,7 +322,7 @@ square32BitUnsigned
     cpy #8                        
     beq .noExtraCarrySquare       ; we are beyond the final byte. In this case ignore carry
     lda #1                        ; add carry to intermediate result
-    adc TEMP_MUL, y
+    adc TEMP_MUL, y               ; due to the cpy #8 above the carry is always clear at this instruction
     sta TEMP_MUL, y
     bcs .carryLoopSquare          ; Another carry occurred after adding the carry => Let's do this again
 .noExtraCarrySquare
@@ -344,7 +344,7 @@ square32BitUnsigned
 ; This subroutine expects its operand in the zero page pointer ADDR_OPER_LEFT and squares it.
 ; and multplies them. This routine ignores the sign bytes.
 ;
-; It also and normalizes the result as a fixed point value of the correct format of 8 bits before
+; It also normalizes the result as a fixed point value of the correct format of 8 bits before
 ; the comma and 24 after the comma. The result is returned in ADDR_OPER_LEFT.
 ; --------------------------------------------------
 square32BitNormalizedUnsigned
