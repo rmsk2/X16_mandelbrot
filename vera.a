@@ -514,3 +514,150 @@ showZoomRect
 .zoomDone
     +loadVeraRegisters SAVED_VERA_STATE
     rts
+
+
+!macro vpoke .x, .y, .code {
+    lda #.x
+    sta TXT_ADDR
+    lda #.y
+    sta TXT_ADDR + 1
+    lda #.code
+    sta TXT_CODE
+    jsr vpokeCall
+}
+
+!macro vpokeAddr .x, .y, .code {
+    lda .x
+    sta TXT_ADDR
+    lda .y
+    sta TXT_ADDR + 1
+    lda #.code
+    sta TXT_CODE
+    jsr vpokeCall
+}
+
+!macro vpokeWithCol .x, .y, .code, .col {
+    lda #.x
+    sta TXT_ADDR
+    lda #.y
+    sta TXT_ADDR + 1
+    lda #.code
+    sta TXT_CODE
+    jsr vpokeCall
+    lda #.col
+    sta TXT_COLOUR
+    jsr vpokeColorCall
+}
+
+!macro vpokeAddrWithCol .xAddr, .yAddr, .code, .col {
+    lda .xAddr
+    sta TXT_ADDR
+    lda .yAddr
+    sta TXT_ADDR + 1
+    lda #.code
+    sta TXT_CODE
+    jsr vpokeCall
+    lda #.col
+    sta TXT_COLOUR
+    jsr vpokeColorCall
+}
+
+
+TXT_COLOUR
+!byte 0
+TXT_CODE
+!byte 0
+
+TXT_ADDR
+!byte 0, 0, 1
+
+; --------------------------------------------------
+; This routine allows to write the value stored at TXT_CODE to the text mode
+; video memory at the coordinates X and Y where X is stored by the caller
+; in TXT_ADDR and Y in TEXT_ADDR + 1.
+;
+; This routine does not return a value.
+; --------------------------------------------------
+vpokeCall 
+    asl TXT_ADDR                                       ; multiply X position by 2 => Lo byte value
+    clc
+    lda #$B0                                           ; Lines are 256 bytes long(!!).
+    adc TXT_ADDR + 1                                   ; We therefore simply have to add $B0 to
+    sta TXT_ADDR + 1                                   ; the Y position of the Vera address hi byte.
+    +loadVeraRegisters TXT_ADDR                        ; Now load address.
+    lda TXT_CODE
+    sta VERA_DATA_0                                    ; store character in screen RAM
+    rts
+
+!macro vpokeColor .col {
+    lda #.col
+    sta TXT_COLOUR
+    jsr vpokeColorCall
+}
+
+; --------------------------------------------------
+; This routine allows to change the color of the character stored in
+; video memory at the coordinates X and Y. This routine assumes that
+; vpokeCall has already been called before the call to vpokeColor.
+;
+; This routine does not return a value.
+; --------------------------------------------------
+vpokeColorCall
+    +add16BitImmediate 1, VERA                        ; color cell is the byte following the character itself
+    lda TXT_COLOUR
+    sta VERA_DATA_0                                   ; store colour value
+    rts
+
+
+HOR_BAR_UPPER = 119
+HOR_BAR_LOWER = 111
+VERT_BAR_LEFT = 116
+VERT_BAR_RIGHT = 106
+LEFT_UPPER_EDGE = 79
+RIGHT_UPPER_EDGE = 80
+RIGHT_LOWER_EDGE = 122
+LEFT_LOWER_EDGE = 76
+
+!macro petsciiRect .x, .y, .w, .h {
+    lda #.x
+    sta PETSCII_COORD_X
+    lda #.y
+    sta PETSCII_COORD_Y
+    lda #.h
+    sta PETSCII_HEIGHT
+    lda #.w
+    sta PETSCII_WIDTH
+    jsr petsciiRectCall
+}
+
+PETSCII_COORD_X
+!byte 0
+PETSCII_WIDTH
+!byte 0
+PETSCII_COORD_Y
+!byte 0
+PETSCII_HEIGHT
+!byte 0
+; --------------------------------------------------
+; This routine allows to draw a PETSCII Rectangle on the 80x60 text screen.
+; 
+; PETSCII_CORD_X, PETSCII_COORD_Y, PETSCII_WIDTH and PETSCII_HEIGHT
+; specify the form of the rectangle
+; --------------------------------------------------
+petsciiRectCall
+    +saveVeraRegisters SAVED_VERA_STATE
+    +selectDataPort0
+    +autoIncOff
+
+    +vpokeWithCol 60, 17, LEFT_UPPER_EDGE, $16
+    +vpokeWithCol 61, 17, HOR_BAR_UPPER, $16
+    +vpokeColor $16
+    +vpoke 62, 17, RIGHT_UPPER_EDGE
+    +vpoke 60, 18, VERT_BAR_LEFT
+    +vpoke 62, 18, VERT_BAR_RIGHT
+    +vpoke 60, 19, LEFT_LOWER_EDGE
+    +vpoke 61, 19, HOR_BAR_LOWER
+    +vpoke 62, 19, RIGHT_LOWER_EDGE
+
+    +loadVeraRegisters SAVED_VERA_STATE
+    rts
