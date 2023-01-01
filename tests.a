@@ -510,5 +510,7 @@ testMain
     +expectValue .VAL_2_MUL_BUG, .VAL_3_MUL_BUG 
 ; --------------------------------------------------    
     +petsciiRect 60, 5, 6, 4
+    +petsciiRect 20, 7, 3, 20
+; --------------------------------------------------    
 testEnd
     rts

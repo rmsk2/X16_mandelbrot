@@ -599,6 +599,8 @@ vpokeCall
 ; This routine allows to change the color of the character stored in
 ; video memory at the coordinates X and Y. This routine assumes that
 ; vpokeCall has already been called before the call to vpokeColor.
+; The two nibbles of the colour value specify a fore- and a background
+; colour.
 ;
 ; This routine does not return a value.
 ; --------------------------------------------------
@@ -638,6 +640,8 @@ PETSCII_COORD_Y
 !byte 0
 PETSCII_HEIGHT
 !byte 0
+.PETSCII_COUNT
+!byte 0
 ; --------------------------------------------------
 ; This routine allows to draw a PETSCII Rectangle on the 80x60 text screen.
 ; 
@@ -648,6 +652,8 @@ petsciiRectCall
     +saveVeraRegisters SAVED_VERA_STATE
     +selectDataPort0
     +autoIncOff
+
+
 
     +vpokeWithCol 60, 17, LEFT_UPPER_EDGE, $16
     +vpokeWithCol 61, 17, HOR_BAR_UPPER, $16
