@@ -471,6 +471,10 @@ DEC_CHARS
 .NEW_DEPTH_RAW
 !byte 0,0
 
+SELECT_ITER_POS_X = MAIN_MENU_X
+SELECT_ITER_POS_Y = MAIN_MENU_Y + 19
+SELECT_ITER_HEIGHT = 2
+
 ; --------------------------------------------------
 ; This routine allows the user to select an iteration depth
 ; 
@@ -479,7 +483,7 @@ DEC_CHARS
 selectIterationDepth
     lda #3
     sta .BUFFER_DEPTH                                         ; set number of bytes available in input string
-    +locate 20, 35
+    +locate SELECT_ITER_POS_X, SELECT_ITER_POS_Y + 1
     +inputStr .BUFFER_DEPTH, DEC_CHARS                        ; Get input string, as string of digits
     pha                                                       ; save length of entered string
     jsr printCRLF
@@ -544,6 +548,9 @@ savePicture
 .noSave
     rts
 
+LOAD_FILE_EDIT_POS_X = MAIN_MENU_X
+LOAD_FILE_EDIT_POS_Y = MAIN_MENU_Y + 13
+LOAD_FILE_EDIT_HEIGHT = 3
 ; --------------------------------------------------
 ; This routine loads a picture and the corresponding parameters from disk
 ; 
@@ -552,14 +559,14 @@ savePicture
 loadPicture
     lda #MAX_FILE_NAME_LENGTH                           ; restore input buffer cpacity
     sta FILE_NAME_SAVE_LOAD
-    +locate 20, 29
+    +locate LOAD_FILE_EDIT_POS_X, LOAD_FILE_EDIT_POS_Y + 1
     +inputStr FILE_NAME_SAVE_LOAD, ALLOWED_FILE_CHARS
     pha
     jsr printCRLF
     pla
     cmp #0
     beq .noLoad                                         ; do nothing if user entered empty string
-    +printStrAt 20, 30, .TXT_LOADING    
+    +printStrAt LOAD_FILE_EDIT_POS_X, LOAD_FILE_EDIT_POS_Y + 2, .TXT_LOADING    
     jsr loadHiresDataFromDisk                           ; load data and store it in banked RAM
     rts
 
@@ -582,9 +589,9 @@ loadAndShowPicture
     cmp #DISK_IO_OK
     beq .doShowAfterLoad               ; do nothing if load failed 
     jsr readAndEvalErrorChannel        ; read error channel
-    +printStrAt 20, 30, ERR_BYTE_COUNTER         ; print error message
+    +printStrAt LOAD_FILE_EDIT_POS_X, LOAD_FILE_EDIT_POS_Y + 2, ERR_BYTE_COUNTER         ; print error message
     jsr printCRLF    
-    jmp .inputSelect
+    jmp .mainMenuInputSelect
 .doShowAfterLoad      
     jsr bitMapOn                       ; This also clears Video RAM
     jsr restoreHiresData               ; Move loaded data to video RAM
@@ -738,28 +745,50 @@ TIMESTAMP_RUNNING
 !byte 22
 !tx "PRESS KEY 1, 2, 3 OR 4"
 
+.MENU_TXT_PROG_NAME
+!byte 32
+!tx "******** MANDELBROT X16 ********"
+
+.MENU_TXT_AUTHOR_NAME
+!byte 22
+!tx "WRITTEN BY MARTIN GRAP"
+
+.MENU_WRITTEN_IN
+!byte 7
+!tx "IN 2022"
+
+
+MAIN_MENU_X = 20
+MAIN_MENU_Y = 10
+MAIN_MENU_WIDTH = 40
+MAIN_MENU_HEIGHT = 10
 
 showMainMenu
     lda #147
     jsr $FFD2
-    +printStrAt 20, 15, .MENU_1
-    +printStrAt 20, 17, .MENU_2
-    +printStrAt 20, 19, .MENU_3
-    +printStrAt 20, 21, .MENU_4
-    +printStrAt 20, 24, .MENU_5
-    +printStrAt 20, 28, .TXT_FILE_NAME
-    +printStrAt 20, 34, .TXT_SELECT_DEPTH
-    
-    +petsciiRect 19, 14, 40, 10, RECT_NO_CLEAR    
-    +petsciiRect 19, 27, 40, 3, RECT_NO_CLEAR    
-    +petsciiRect 19, 33, 40, 2, RECT_NO_CLEAR
 
-.inputSelect
+    +printStrAt MAIN_MENU_X + 4, 2, .MENU_TXT_PROG_NAME
+    +printStrAt MAIN_MENU_X + 9, 4, .MENU_TXT_AUTHOR_NAME
+    +printStrAt MAIN_MENU_X + 16, 6, .MENU_WRITTEN_IN
+
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y, .MENU_1
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 2, .MENU_2
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 4, .MENU_3
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 6, .MENU_4
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 9, .MENU_5
+    +printStrAt LOAD_FILE_EDIT_POS_X, LOAD_FILE_EDIT_POS_Y, .TXT_FILE_NAME
+    +printStrAt SELECT_ITER_POS_X, SELECT_ITER_POS_Y, .TXT_SELECT_DEPTH
+    
+    +petsciiRect MAIN_MENU_X - 1, MAIN_MENU_Y - 1, MAIN_MENU_WIDTH, MAIN_MENU_HEIGHT, RECT_NO_CLEAR    
+    +petsciiRect LOAD_FILE_EDIT_POS_X - 1, LOAD_FILE_EDIT_POS_Y - 1, MAIN_MENU_WIDTH, LOAD_FILE_EDIT_HEIGHT, RECT_NO_CLEAR    
+    +petsciiRect SELECT_ITER_POS_X - 1, SELECT_ITER_POS_Y - 1, MAIN_MENU_WIDTH, SELECT_ITER_HEIGHT, RECT_NO_CLEAR
+
+.mainMenuInputSelect
     ; Handle inital menu
     jsr waitForKey
     cmp #49                            ; 1. pressed?
     bne .checkFor2                     ; No
-    +clearLineAt 20, 30, 40
+    +clearLineAt LOAD_FILE_EDIT_POS_X, LOAD_FILE_EDIT_POS_Y + 2, MAIN_MENU_WIDTH
     jmp loadAndShowPicture             ; yes => load and show picture
 .checkFor2
     cmp #50                            ; 2. pressed?
@@ -772,7 +801,7 @@ showMainMenu
 .checkFor4
     cmp #52                            ; 4. pressed ?
     beq .exitProgram
-    jmp .inputSelect                   ; No => try again
+    jmp .mainMenuInputSelect                   ; No => try again
     ; 4. was pressed
 .exitProgram
     lda #147
