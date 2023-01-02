@@ -337,6 +337,6 @@ loadHiresDataFromDisk
 .showErrorLoadAndClose
     lda #.IO_FILE_NUM
     jsr CLOSE
-    +printStr .TXT_ERROR_LOAD
+    ;+printStr .TXT_ERROR_LOAD
     lda #DISK_IO_ERR
     rts

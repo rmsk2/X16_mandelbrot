@@ -263,8 +263,24 @@ getString
     lda .INDEX_OUTPUT
     beq .inputLoop                             ; Output index is 0 => do nothing
     dec .INDEX_OUTPUT                          ; decrement the output position
-    lda #20                                    ; print delete character
+
+    ; emulate delete. This is necessary to not
+    ; disturb the PETSCII UI
+    lda #32                                    ; space
+    jsr CHAROUT                               
+
+    lda #157                                   ; Cursor left
     jsr CHAROUT
+
+    lda #157                                   ; Cursor left
+    jsr CHAROUT
+
+    lda #32                                    ; space
+    jsr CHAROUT                               
+
+    lda #157                                   ; Cursor left
+    jsr CHAROUT
+
     jmp .inputLoop                             ; let user enter next character
 
 .inputDone
@@ -310,6 +326,12 @@ clearCursor
     sta .targetStr
 }
 
+
+!macro clearLineAt .posx, .posy, .len {
+    +locate .posx, .posy
+    lda #.len
+    jsr printSpaces
+}
 
 .TEMP_X
 !byte 0

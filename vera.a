@@ -584,6 +584,7 @@ vpokeCall
     lda #$B0                                           ; Lines are 256 bytes long(!!).
     adc TXT_ADDR + 1                                   ; We therefore simply have to add $B0 to
     sta TXT_ADDR + 1                                   ; the Y position of the Vera address hi byte.
+vpokeInternal
     +loadVeraRegisters TXT_ADDR                        ; Now load address.
     lda TXT_CODE
     sta VERA_DATA_0                                    ; store character in screen RAM
@@ -619,8 +620,12 @@ LEFT_UPPER_EDGE = 79
 RIGHT_UPPER_EDGE = 80
 RIGHT_LOWER_EDGE = 122
 LEFT_LOWER_EDGE = 76
+RECT_NO_CLEAR = 1
+RECT_CLEAR = 0
+CHAR_NONE = $FF
 
-!macro petsciiRect .x, .y, .w, .h {
+
+!macro petsciiRect .x, .y, .w, .h, .clear {
     lda #.x
     sta PETSCII_COORD_X
     lda #.y
@@ -629,6 +634,8 @@ LEFT_LOWER_EDGE = 76
     sta PETSCII_HEIGHT
     lda #.w
     sta PETSCII_WIDTH
+    lda #.clear
+    sta PETSCII_CLEAR
     jsr petsciiRectCall
 }
 
@@ -640,30 +647,112 @@ PETSCII_COORD_Y
 !byte 0
 PETSCII_HEIGHT
 !byte 0
-.PETSCII_COUNT
+PETSCII_CLEAR
 !byte 0
+
+.PETSCII_COUNT_Y
+!byte 0
+.PETSCII_COUNT_Y2
+!byte 0
+.PETSCII_COUNT_X
+!byte 0
+
+.UPPER_LINE
+!byte LEFT_UPPER_EDGE, HOR_BAR_UPPER, RIGHT_UPPER_EDGE
+.MIDDLE_LINE
+!byte VERT_BAR_LEFT, CHAR_NONE, VERT_BAR_RIGHT
+.MIDDLE_LINE_CLEAR
+!byte VERT_BAR_LEFT, 32, VERT_BAR_RIGHT
+.LOWER_LINE
+!byte LEFT_LOWER_EDGE, HOR_BAR_LOWER, RIGHT_LOWER_EDGE
+
+; --------------------------------------------------
+; This routine draws a horizontal line of PETSCII characters on the screen. It assumes
+; that the VRAM address at TXT_ADDR is set to the starting point. The line length is
+; determined by the contents of PETSCII_WIDTH. It also expects the pointer DRAW_HELP to
+; be set to an address where the three screen codes of the characters that are used
+; to draw the line are stored. The first character is used to draw the leftmost char,
+; the third character is used for the last character of the line and the second character 
+; is used for the rest. The screen code NO_CHAR is not written to video RAM and can be
+; used to leave the current contents of rectangle undisturbed.
+;
+; This routine does not return a result.
+; --------------------------------------------------
+drawOneLine
+    ldy #0
+    stz .PETSCII_COUNT_X
+    lda (DRAW_HELP)
+    sta TXT_CODE
+    jsr vpokeInternal
+    inc TXT_ADDR
+    inc TXT_ADDR
+    iny
+
+.lineLoop
+    lda .PETSCII_COUNT_X
+    cmp PETSCII_WIDTH
+    bcs .drawRightEdge
+    lda (DRAW_HELP), y
+    cmp #CHAR_NONE
+    beq .nextChar
+    sta TXT_CODE
+    jsr vpokeInternal
+.nextChar
+    inc TXT_ADDR
+    inc TXT_ADDR
+    inc .PETSCII_COUNT_X
+    bra .lineLoop
+
+.drawRightEdge
+    iny
+    lda (DRAW_HELP), y
+    sta TXT_CODE
+    jsr vpokeInternal
+    rts
+
 ; --------------------------------------------------
 ; This routine allows to draw a PETSCII Rectangle on the 80x60 text screen.
 ; 
 ; PETSCII_CORD_X, PETSCII_COORD_Y, PETSCII_WIDTH and PETSCII_HEIGHT
-; specify the form of the rectangle
+; specify the form of the rectangle and PETSCII_CLEAR controls whether the inner
+; space of the rectangle is filled with space characters. Width and height count
+; the number 
 ; --------------------------------------------------
 petsciiRectCall
     +saveVeraRegisters SAVED_VERA_STATE
     +selectDataPort0
     +autoIncOff
+    
+    lda PETSCII_COORD_Y
+    sta .PETSCII_COUNT_Y
 
+    +vpokeAddr PETSCII_COORD_X, .PETSCII_COUNT_Y, LEFT_UPPER_EDGE
+    +load16BitImmediate .UPPER_LINE, DRAW_HELP
+    jsr drawOneLine
+    
+    inc .PETSCII_COUNT_Y
+    stz .PETSCII_COUNT_Y2
 
+.countLines
+    lda .PETSCII_COUNT_Y2
+    cmp PETSCII_HEIGHT
+    bcs .linesDone
 
-    +vpokeWithCol 60, 17, LEFT_UPPER_EDGE, $16
-    +vpokeWithCol 61, 17, HOR_BAR_UPPER, $16
-    +vpokeColor $16
-    +vpoke 62, 17, RIGHT_UPPER_EDGE
-    +vpoke 60, 18, VERT_BAR_LEFT
-    +vpoke 62, 18, VERT_BAR_RIGHT
-    +vpoke 60, 19, LEFT_LOWER_EDGE
-    +vpoke 61, 19, HOR_BAR_LOWER
-    +vpoke 62, 19, RIGHT_LOWER_EDGE
+    +vpokeAddr PETSCII_COORD_X, .PETSCII_COUNT_Y, VERT_BAR_LEFT
+    +load16BitImmediate .MIDDLE_LINE, DRAW_HELP
+    lda PETSCII_CLEAR
+    bne .noClearRect
+    +load16BitImmediate .MIDDLE_LINE_CLEAR, DRAW_HELP
+.noClearRect
+    jsr drawOneLine
+    inc .PETSCII_COUNT_Y
+    inc .PETSCII_COUNT_Y2
+    bra .countLines
+
+.linesDone
+    +vpokeAddr PETSCII_COORD_X, .PETSCII_COUNT_Y, LEFT_LOWER_EDGE
+    +load16BitImmediate .LOWER_LINE, DRAW_HELP
+    jsr drawOneLine
 
     +loadVeraRegisters SAVED_VERA_STATE
     rts

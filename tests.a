@@ -509,8 +509,8 @@ testMain
     +perfTest mul32BitNormalized, .VAL_1_MUL_BUG, .VAL_2_MUL_BUG, .TEXT_MUL_BUG
     +expectValue .VAL_2_MUL_BUG, .VAL_3_MUL_BUG 
 ; --------------------------------------------------    
-    +petsciiRect 60, 5, 6, 4
-    +petsciiRect 20, 7, 3, 20
+    +petsciiRect 7, 40, 20, 1, RECT_NO_CLEAR
+    +petsciiRect 5, 7, 15, 20, RECT_CLEAR
 ; --------------------------------------------------    
 testEnd
     rts

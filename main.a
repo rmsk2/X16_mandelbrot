@@ -477,9 +477,9 @@ DEC_CHARS
 ; It does not return a value but modifies MAX_ITER.
 ; --------------------------------------------------
 selectIterationDepth
-    +printStr .TXT_SELECT_DEPTH
     lda #3
     sta .BUFFER_DEPTH                                         ; set number of bytes available in input string
+    +locate 20, 35
     +inputStr .BUFFER_DEPTH, DEC_CHARS                        ; Get input string, as string of digits
     pha                                                       ; save length of entered string
     jsr printCRLF
@@ -550,33 +550,22 @@ savePicture
 ; It returns DISK_IO_OK if loading was successfull.
 ; --------------------------------------------------
 loadPicture
-    +printStr .TXT_FILE_NAME
     lda #MAX_FILE_NAME_LENGTH                           ; restore input buffer cpacity
     sta FILE_NAME_SAVE_LOAD
+    +locate 20, 29
     +inputStr FILE_NAME_SAVE_LOAD, ALLOWED_FILE_CHARS
     pha
     jsr printCRLF
     pla
     cmp #0
     beq .noLoad                                         ; do nothing if user entered empty string
-    +printStr .TXT_LOADING    
+    +printStrAt 20, 30, .TXT_LOADING    
     jsr loadHiresDataFromDisk                           ; load data and store it in banked RAM
     rts
 
 .noLoad
     lda #DISK_IO_ERR
     rts
-
-.TXT_SELECT
-!byte 68
-!tx "1. LOAD PICTURE"
-!byte 13
-!tx "2. USE CURRENT VALUES"
-!byte 13
-!tx "3. USE DEFAULT VALUES"
-!byte 13
-!tx "4. EXIT"
-!byte 13
 
 ; --------------------------------------------------
 ; This routine loads a picture, shows it and handles keyboard input
@@ -593,9 +582,9 @@ loadAndShowPicture
     cmp #DISK_IO_OK
     beq .doShowAfterLoad               ; do nothing if load failed 
     jsr readAndEvalErrorChannel        ; read error channel
-    +printStr ERR_BYTE_COUNTER         ; print error message
+    +printStrAt 20, 30, ERR_BYTE_COUNTER         ; print error message
     jsr printCRLF    
-    rts
+    jmp .inputSelect
 .doShowAfterLoad      
     jsr bitMapOn                       ; This also clears Video RAM
     jsr restoreHiresData               ; Move loaded data to video RAM
@@ -616,7 +605,7 @@ loadAndShowPicture
     +withPrinterCall showCalcParameters, .printNothing
     cmp #CONST_CONTINUE                ; Does user want to end the program?
     beq .waitForCommand                ; No => continue showing picture
-    rts
+    jmp .mainMenu
 
 
 CONST_CONTINUE = 1
@@ -686,7 +675,7 @@ handlePicDone
     +withPrinterCall showCalcNoSaveHires, .printFinishedTime
     cmp #CONST_CONTINUE
     beq .checkForKeyPress
-    rts
+    jmp .mainMenu
 
 
 TIMESTAMP_RUNNING
@@ -731,6 +720,65 @@ TIMESTAMP_RUNNING
 .printNothing 
     rts
 
+.TXT_SELECT
+!byte 73
+.MENU_1
+!byte 15
+!tx "1. LOAD PICTURE"
+.MENU_2
+!byte 25
+!tx "2. CHANGE ITERATION DEPTH"
+.MENU_3
+!byte 21
+!tx "3. USE DEFAULT VALUES"
+.MENU_4
+!byte 7
+!tx "4. EXIT"
+.MENU_5
+!byte 22
+!tx "PRESS KEY 1, 2, 3 OR 4"
+
+
+showMainMenu
+    lda #147
+    jsr $FFD2
+    +printStrAt 20, 15, .MENU_1
+    +printStrAt 20, 17, .MENU_2
+    +printStrAt 20, 19, .MENU_3
+    +printStrAt 20, 21, .MENU_4
+    +printStrAt 20, 24, .MENU_5
+    +printStrAt 20, 28, .TXT_FILE_NAME
+    +printStrAt 20, 34, .TXT_SELECT_DEPTH
+    
+    +petsciiRect 19, 14, 40, 10, RECT_NO_CLEAR    
+    +petsciiRect 19, 27, 40, 3, RECT_NO_CLEAR    
+    +petsciiRect 19, 33, 40, 2, RECT_NO_CLEAR
+
+.inputSelect
+    ; Handle inital menu
+    jsr waitForKey
+    cmp #49                            ; 1. pressed?
+    bne .checkFor2                     ; No
+    +clearLineAt 20, 30, 40
+    jmp loadAndShowPicture             ; yes => load and show picture
+.checkFor2
+    cmp #50                            ; 2. pressed?
+    bne .checkFor3
+    jmp .useCurrent                    ; yes
+.checkFor3
+    cmp #51                            ; 3. pressed?
+    bne .checkFor4
+    jmp .resetCalcParms                ; Yes
+.checkFor4
+    cmp #52                            ; 4. pressed ?
+    beq .exitProgram
+    jmp .inputSelect                   ; No => try again
+    ; 4. was pressed
+.exitProgram
+    lda #147
+    jsr $FFD2
+    rts
+
 ; --------------------------------------------------
 ; This routine is the main entry point of the program
 ; --------------------------------------------------
@@ -738,25 +786,14 @@ progStart
     jsr initArithmetic
     stz .INTERRUPTED                   ; clean up possible residue from a previous program execution
 
-    +printStr .TXT_SELECT    
-.inputSelect
-    ; Handle inital menu
-    jsr waitForKey
-    cmp #49                            ; 1. pressed?
-    bne .checkFor2                     ; No
-    jmp loadAndShowPicture             ; yes => load and show picture
-.checkFor2
-    cmp #50                            ; 2. pressed?
-    beq .useCurrent                    ; yes
-    cmp #51                            ; 3. pressed?
-    beq .resetCalcParms                ; yes
-    cmp #52                            ; 4. pressed ?
-    bne .inputSelect                   ; No => try again
-    ; 4. was pressed
-    rts
+.mainMenu
+    jmp showMainMenu
 
 .resetCalcParms
     jsr resetParametersHires
+    lda #ITER_DEFAULT
+    sta MAX_ITER
+    bra .restart
 .useCurrent
     jsr selectIterationDepth           ; let user select iteration depth
 .restart
@@ -789,7 +826,7 @@ progStart
     jmp handlePicDone
 .endMandel
     stz .INTERRUPTED                    ; Make program forget that it was interrupted => calculation starts anew after running it again
-    rts
+    jmp .mainMenu
 
 } else {
 
