@@ -456,6 +456,64 @@ VEC_SPECIAL_PRINT
     rts
 
 
+.TXT_VALUES_NO_CR
+!byte 27
+!tx "VALUES USED FOR CALCULATION"
+
+ORIGIN_X
+!byte 0
+ORIGIN_Y
+!byte 0
+
+.printLastValuesAt
+    +locateAddr ORIGIN_X, ORIGIN_Y
+    +printStr .TXT_VALUES_NO_CR
+    inc ORIGIN_Y
+    inc ORIGIN_Y
+
+    +locateAddr ORIGIN_X, ORIGIN_Y
+    +printStr .TXT_REAL_PART
+    +printFixedPoint INIT_REAL
+    inc ORIGIN_Y
+
+    +locateAddr ORIGIN_X, ORIGIN_Y
+    +printStr .TXT_IMAGINARY_PART
+    +printFixedPoint INIT_IMAG
+    inc ORIGIN_Y
+
+    +locateAddr ORIGIN_X, ORIGIN_Y
+    +printStr .TXT_ZOOM_LEVEL
+    +itoa ZOOM_LEVEL, .STR_CONV
+    +printStr .STR_CONV
+    inc ORIGIN_Y
+
+    +locateAddr ORIGIN_X, ORIGIN_Y
+    +printStr .TXT_ITERATION_DEPTH
+    +itoa MAX_ITER, .STR_CONV
+    +printStr .STR_CONV
+    inc ORIGIN_Y
+
+    +locateAddr ORIGIN_X, ORIGIN_Y
+    +printStr .TXT_STEPPING_X
+    +printFixedPoint STEP_X
+    inc ORIGIN_Y
+
+    +locateAddr ORIGIN_X, ORIGIN_Y
+    +printStr .TXT_STEPPING_Y
+    +printFixedPoint STEP_Y
+    inc ORIGIN_Y
+
+!ifdef ITER_COUNT {
+    +locateAddr ORIGIN_X, ORIGIN_Y
+    +printStr TXT_ITERATIONS
+    +printFixedPoint ITER_CTR
+    inc ORIGIN_Y
+}
+    jsr .specialWrapper
+
+    rts
+
+
 .TXT_SELECT_DEPTH
 !byte 40
 !tx "SELECT ITERATION DEPTH (24 IS DEFAULT): "
@@ -754,8 +812,8 @@ TIMESTAMP_RUNNING
 !tx "WRITTEN BY MARTIN GRAP"
 
 .MENU_WRITTEN_IN
-!byte 7
-!tx "IN 2022"
+!byte 12
+!tx "IN 2022/2023"
 
 
 MAIN_MENU_X = 20
@@ -769,7 +827,7 @@ showMainMenu
 
     +printStrAt MAIN_MENU_X + 4, 2, .MENU_TXT_PROG_NAME
     +printStrAt MAIN_MENU_X + 9, 4, .MENU_TXT_AUTHOR_NAME
-    +printStrAt MAIN_MENU_X + 16, 6, .MENU_WRITTEN_IN
+    +printStrAt MAIN_MENU_X + 13, 6, .MENU_WRITTEN_IN
 
     +printStrAt MAIN_MENU_X, MAIN_MENU_Y, .MENU_1
     +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 2, .MENU_2
@@ -782,6 +840,14 @@ showMainMenu
     +petsciiRect MAIN_MENU_X - 1, MAIN_MENU_Y - 1, MAIN_MENU_WIDTH, MAIN_MENU_HEIGHT, RECT_NO_CLEAR    
     +petsciiRect LOAD_FILE_EDIT_POS_X - 1, LOAD_FILE_EDIT_POS_Y - 1, MAIN_MENU_WIDTH, LOAD_FILE_EDIT_HEIGHT, RECT_NO_CLEAR    
     +petsciiRect SELECT_ITER_POS_X - 1, SELECT_ITER_POS_Y - 1, MAIN_MENU_WIDTH, SELECT_ITER_HEIGHT, RECT_NO_CLEAR
+
+    lda #MAIN_MENU_X + 6
+    sta ORIGIN_X
+    lda #SELECT_ITER_POS_Y + 5
+    sta ORIGIN_Y
+    +load16BitImmediate .printNothing, VEC_SPECIAL_PRINT
+    jsr .printLastValuesAt
+    +petsciiRect MAIN_MENU_X - 1, SELECT_ITER_POS_Y + 4, MAIN_MENU_WIDTH, 8, RECT_NO_CLEAR
 
 .mainMenuInputSelect
     ; Handle inital menu
