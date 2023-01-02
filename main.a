@@ -670,7 +670,7 @@ handlePicDone
     jsr readAndEvalErrorChannel        ; read error channel
     +printStr ERR_BYTE_COUNTER         ; print error message
     jsr printCRLF
-    rts
+    jmp .mainMenu
 .showValuesAtEnd
     +withPrinterCall showCalcNoSaveHires, .printFinishedTime
     cmp #CONST_CONTINUE
