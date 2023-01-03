@@ -919,6 +919,10 @@ showMainMenu
 
 HELP_Y = 50
 
+; --------------------------------------------------
+; This routine prints the two boxes at the bottom of the main
+; menu which contain help messages.
+; --------------------------------------------------
 printHelpMessage
     +printStrAt 2, HELP_Y, .TXT_HELP_1
     +printStrAt 2, HELP_Y+1, .TXT_HELP_2
