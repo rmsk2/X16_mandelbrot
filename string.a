@@ -127,7 +127,7 @@ checkKey
 ; About the string routines: The first byte of a string is a length
 ; value followed by the characters of the string. The maximum length
 ; of a string including the length byte is 255 bytes. This also means
-; that a sting can contain at most 254 characters.
+; that a string can contain at most 254 characters.
 ; --------------------------------------------------
 
 STR_LEN_TEMP

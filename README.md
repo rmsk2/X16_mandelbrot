@@ -9,12 +9,11 @@ is intended for [Commander X16](https://www.commanderx16.com) (see also here on
 - More colours to use in Hires mode (256 for the X16, 2 for the C64)
 - New instructions for the 65C02 (well only `stz` and `bra`)
 
-**This is work in progress**. Currently the default section of the Mandelbrot set (see screenshot below) 
-using the X16s full resolution of 320x240 at a depth of 24 iterations (in total 717022 iterations) is 
-calculated in under 13 minutes at about 950 iterations/sec. The  C64 version takes two and a half hours to 
-calculate the same visualisation in a resolution of 320x200. Of course the biggest part of the speedup stems
-from the fact that the 65C02 in the X16 runs at 8MHz where the 6510 in a C64 is clocked at 1MHz. But even 
-if that is taken into account the X16 version is currently faster.
+Currently the default section of the Mandelbrot set (see screenshot below) using the X16s full resolution of 320x240 
+at a depth of 24 iterations (in total 717022 iterations) is calculated in under 13 minutes at about 950 iterations/sec. 
+The  C64 version takes two and a half hours to calculate the same visualisation in a resolution of 320x200. Of course 
+the biggest part of the speedup stems from the fact that the 65C02 in the X16 runs at 8MHz where the 6510 in a C64 is
+clocked at 1MHz. But even if that is taken into account the X16 version is currently faster.
 
 ![](/result.png?raw=true "Example picture in hires mode")
 
@@ -38,7 +37,7 @@ systems? And on top of that the computer that the program is designed to run on 
 a certain extent as only a few prototypes have been built yet.
 
 The only reasons I can give are: I had fun doing it and it was nostalgic as it transported me back to
-the days when another 6502 system was the center of the (home) computing universe. The commander
+the days when another 6502 system was the center of at least my (home) computing universe. The commander
 X16 (or to be more precise at the moment its emulator) strikes the right balance between new possibilities 
 and a nostalgic familiarity with the Commodore family of home computers that allows all the people
 that grew up with these computers to now write the programs that they did not or could not write in

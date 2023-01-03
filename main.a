@@ -750,6 +750,12 @@ TIMESTAMP_RUNNING
 !tx "DONE AFTER     : "
 
 
+; --------------------------------------------------
+; This routine prints the time needed for an ongoing calculation up
+; to this point in time. It is intended to be used as a parameter 
+; for the printLastValuesAtCall routine by assigning it to the 
+; VEC_SPECIAL_PRINT jmp vector.
+; --------------------------------------------------
 .printRunningTime
     +getTimestamp TIMESTAMP_RUNNING
     +diffTime TIMESTAMP_CALC_START, TIMESTAMP_RUNNING
@@ -761,7 +767,11 @@ TIMESTAMP_RUNNING
 
 .TIMESTAMP_END_TEMP
 !byte 0, 0, 0
-
+; --------------------------------------------------
+; This routine prints the total time used for a calculation.
+; It is intended to be used as a parameter for the printLastValuesAtCall
+; routine by assigning it to the VEC_SPECIAL_PRINT jmp vector.
+; --------------------------------------------------
 .printFinishedTime
     +copyTs TIMESTAMP_CALC_END, .TIMESTAMP_END_TEMP
     +diffTime TIMESTAMP_CALC_START, .TIMESTAMP_END_TEMP
@@ -771,6 +781,12 @@ TIMESTAMP_RUNNING
     rts
 
 
+; --------------------------------------------------
+; This routine prints nothing. It is intended to be used as a
+; parameter for the printLastValuesAtCall routine by assigning it to the 
+; VEC_SPECIAL_PRINT jmp vector. It is used when a picture has been
+; loaded and not calculated.
+; --------------------------------------------------
 .printNothing 
     rts
 
@@ -843,7 +859,7 @@ showMainMenu
     jsr printHelpMessage
 
 .mainMenuInputSelect
-    ; Handle inital menu
+    ; Handle initial menu
     jsr waitForKey
     cmp #49                            ; 1. pressed?
     bne .checkFor2                     ; No
