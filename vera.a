@@ -710,6 +710,9 @@ drawOneLine
     jsr vpokeInternal
     rts
 
+PETSCII_VERA_STATE
+!byte 0,0,0
+
 ; --------------------------------------------------
 ; This routine allows to draw a PETSCII Rectangle on the 80x60 text screen.
 ; 
@@ -719,7 +722,7 @@ drawOneLine
 ; the number 
 ; --------------------------------------------------
 petsciiRectCall
-    +saveVeraRegisters SAVED_VERA_STATE
+    +saveVeraRegisters PETSCII_VERA_STATE
     +selectDataPort0
     +autoIncOff
     
@@ -754,5 +757,5 @@ petsciiRectCall
     +load16BitImmediate .LOWER_LINE, DRAW_HELP
     jsr drawOneLine
 
-    +loadVeraRegisters SAVED_VERA_STATE
+    +loadVeraRegisters PETSCII_VERA_STATE
     rts
