@@ -506,7 +506,7 @@ DEC_CHARS
 !byte 0,0
 
 SELECT_ITER_POS_X = MAIN_MENU_X
-SELECT_ITER_POS_Y = MAIN_MENU_Y + 19
+SELECT_ITER_POS_Y = MAIN_MENU_Y + MAIN_MENU_HEIGHT + 9
 SELECT_ITER_HEIGHT = 2
 
 ; --------------------------------------------------
@@ -553,8 +553,8 @@ selectIterationDepth
 !tx "STORE PICTURE ON SD CARD"
 
 .TXT_STORE_SD_2
-!byte 38
-!tx "- PRESS ANY KEY TO RETURN TO MAIN MENU"
+!byte 37
+!tx "PRESS ANY KEY TO GO BACK TO MAIN MENU"
 
 
 ALLOWED_FILE_CHARS
@@ -587,7 +587,7 @@ savePicture
     rts
 
 LOAD_FILE_EDIT_POS_X = MAIN_MENU_X
-LOAD_FILE_EDIT_POS_Y = MAIN_MENU_Y + 13
+LOAD_FILE_EDIT_POS_Y = MAIN_MENU_Y + MAIN_MENU_HEIGHT + 3
 LOAD_FILE_EDIT_HEIGHT = 3
 ; --------------------------------------------------
 ; This routine loads a picture and the corresponding parameters from disk
@@ -657,8 +657,8 @@ CONST_CONTINUE = 1
 CONST_FINISH = 0
 
 .TXT_CONTINUE_1
-!byte 38
-!tx "- PRESS RETURN TO RETURN TO MAIN MENU."
+!byte 39
+!tx "- PRESS RETURN TO GO BACK TO MAIN MENU."
 .TXT_CONTINUE_2
 !byte 34
 !tx "- PRESS ANY OTHER KEY TO CONTINUE." 
@@ -756,7 +756,6 @@ TIMESTAMP_RUNNING
     +getTimeStr .TXT_TIMESTAMP, TIMESTAMP_RUNNING
     +printStr .TXT_RUNNING_TIME
     +printStr .TXT_TIMESTAMP
-    ;jsr printCRLF
     rts
 
 
@@ -769,7 +768,6 @@ TIMESTAMP_RUNNING
     +getTimeStr .TXT_TIMESTAMP, .TIMESTAMP_END_TEMP
     +printStr .TXT_FINISHED_TIME
     +printStr .TXT_TIMESTAMP
-    ;jsr printCRLF
     rts
 
 
@@ -788,11 +786,14 @@ TIMESTAMP_RUNNING
 !byte 21
 !tx "3. USE DEFAULT VALUES"
 .MENU_4
-!byte 7
-!tx "4. EXIT"
+!byte 21
+!tx "4. USE CURRENT VALUES"
 .MENU_5
-!byte 22
-!tx "PRESS KEY 1, 2, 3 OR 4"
+!byte 7
+!tx "5. EXIT"
+.MENU_6
+!byte 25
+!tx "PRESS KEY 1, 2, 3, 4 OR 5"
 
 .MENU_TXT_PROG_NAME
 !byte 32
@@ -810,7 +811,7 @@ TIMESTAMP_RUNNING
 MAIN_MENU_X = 20
 MAIN_MENU_Y = 10
 MAIN_MENU_WIDTH = 40
-MAIN_MENU_HEIGHT = 10
+MAIN_MENU_HEIGHT = 12
 
 showMainMenu
     lda #147
@@ -825,6 +826,7 @@ showMainMenu
     +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 4, .MENU_3
     +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 6, .MENU_4
     +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 9, .MENU_5
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 11, .MENU_6
     +printStrAt LOAD_FILE_EDIT_POS_X, LOAD_FILE_EDIT_POS_Y, .TXT_FILE_NAME
     +printStrAt SELECT_ITER_POS_X, SELECT_ITER_POS_Y, .TXT_SELECT_DEPTH
     
@@ -846,16 +848,20 @@ showMainMenu
 .checkFor2
     cmp #50                            ; 2. pressed?
     bne .checkFor3
-    jmp .useCurrent                    ; yes
+    jmp .changeIterDepth               ; yes
 .checkFor3
     cmp #51                            ; 3. pressed?
     bne .checkFor4
     jmp .resetCalcParms                ; Yes
 .checkFor4
     cmp #52                            ; 4. pressed ?
+    bne .checkFor5
+    jmp .restart                       ; yes
+.checkFor5
+    cmp #53                            ; 5. pressed ?
     beq .exitProgram
-    jmp .mainMenuInputSelect                   ; No => try again
-    ; 4. was pressed
+    jmp .mainMenuInputSelect           ; No => try again
+    ; 5. was pressed
 .exitProgram
     lda #147
     jsr $FFD2
@@ -876,7 +882,7 @@ progStart
     lda #ITER_DEFAULT
     sta MAX_ITER
     bra .restart
-.useCurrent
+.changeIterDepth
     jsr selectIterationDepth           ; let user select iteration depth
 .restart
     +getTimestamp TIMESTAMP_CALC_START

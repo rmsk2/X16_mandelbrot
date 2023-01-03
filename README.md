@@ -19,9 +19,8 @@ if that is taken into account the X16 version is currently faster.
 ![](/result.png?raw=true "Example picture in hires mode")
 
 You have to start the Commander X16 emulator with at least the following options: `-sdcard sdcard.img -rtc` for
-all features to work. Use the `LOAD "FILENAME"` command followed by `RUN` to start the program once it is loaded.
-Alternatively you can utilize the `-prg` option to load the program even if it is not stored on the SD-card 
-image.
+all features to work. `LOAD` the program from SD card und type `RUN` to start it. Alternatively you can utilize 
+the `-prg` option to load the program even if it is not stored on the SD-card  image.
 
 # Building the software
 
@@ -47,20 +46,21 @@ the 80ies or 90ies.
 
 # Using the program
 
-When you start the program you can select whether you want 1. to load a picture and its corresponding values, 2. 
-use the current values, 3. reset to the default values or 4. to exit again. An option is selected by pressing the 
-corresponding number. Alternatives 2. and 3. differ in the fact that 2. reuses the current calculation parameters 
-which are still present in RAM as long as you do not reset the computer. This can for instance be utilized to redraw 
-a picture with an increased iteration depth. The iteration depth can be set after selecting option 2. or 3.
+When you start the program you can select whether you want 1. to load a picture and its corresponding values
+from SD card, 2. to start a new calculation using the current values but with a different iteration depth, 3. to
+reset to the default values and start a new calculation, 4. start a new calculation using the current values 
+or 5. to exit again. An option is selected by pressing the corresponding number.
+
+![](/main_menu.png?raw=true "Main menu")
 
 When you select option 1. the picture data and its associated parameters are loaded into RAM and then shown
 on the screen. You can zoom into the picture by pressing `F5` (see *Zooming into the Mandelbrot set*) below or 
 you can look at the parameters by pressing any other key.
 
-When you select option 2. or 3. a new picture is calculated. The calculation can be interrupted at any time
+When you select option 2. or 3. or 4. a new picture is calculated. The calculation can be interrupted at any time
 by pressing a key. If that key is `F5` you can zoom into the Mandelbrot set (see corresponding section below).
 When any other key is pressed the parameters used for calculation are presented. If you then press `RETURN` the
-calculation is stopped. Any other key resumes the calculation.
+calculation is stopped and the program returns to the main menu. Any other key resumes the calculation.
 
 If all calculations for a picture have been performed the program waits for a key press. You can press `F5` 
 to zoom further into the set (see below) or press `F7` to save the picture on SD card. If you press any other 
