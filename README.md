@@ -48,7 +48,7 @@ the 80ies or 90ies.
 When you start the program you can select whether you want 1. to load a picture and its corresponding values
 from SD card, 2. to start a new calculation using the current values but with a different iteration depth, 3. to
 reset to the default values and start a new calculation, 4. start a new calculation using the current values 
-or 5. to exit again. An option is selected by pressing the corresponding number.
+or 5. to exit again. An option is selected by pressing the key corresponding to the number.
 
 ![](/main_menu.png?raw=true "Main menu")
 
