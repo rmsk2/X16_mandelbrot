@@ -541,19 +541,21 @@ selectIterationDepth
 !tx "FILENAME: "
 
 .TXT_LOADING
-!byte 12
+!byte 11
 !tx "LOADING ..."
-!byte 13
 
 .TXT_SAVING
-!byte 11
+!byte 10
 !tx "SAVING ..."
-!byte 13
 
 .TXT_STORE_SD
-!byte 25
+!byte 24
 !tx "STORE PICTURE ON SD CARD"
-!byte 13
+
+.TXT_STORE_SD_2
+!byte 38
+!tx "- PRESS ANY KEY TO RETURN TO MAIN MENU"
+
 
 ALLOWED_FILE_CHARS
 !byte 38
@@ -565,17 +567,19 @@ ALLOWED_FILE_CHARS
 ; It returns DISK_IO_OK if saving was successfull.
 ; --------------------------------------------------
 savePicture
-    +printStr .TXT_STORE_SD
-    +printStr .TXT_FILE_NAME
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y, .TXT_STORE_SD
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 2, .TXT_STORE_SD_2
+    +petsciiRect MAIN_MENU_X - 1, MAIN_MENU_Y - 1, MAIN_MENU_WIDTH, 3, RECT_NO_CLEAR
+
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 6, .TXT_FILE_NAME
+    +petsciiRect MAIN_MENU_X - 1, MAIN_MENU_Y + 5, MAIN_MENU_WIDTH, 4, RECT_NO_CLEAR
+    +locate MAIN_MENU_X, MAIN_MENU_Y + 7
     lda #MAX_FILE_NAME_LENGTH                            ; restore input buffer cpacity
     sta FILE_NAME_SAVE_LOAD
     +inputStr FILE_NAME_SAVE_LOAD, ALLOWED_FILE_CHARS
-    pha
-    jsr printCRLF
-    pla
     cmp #0
     beq .noSave                                          ; do nothing if user entered an empty string
-    +printStr .TXT_SAVING    
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 8, .TXT_SAVING    
     jsr saveHiresDataToDisk                              ; save data from banked RAM to disk
     rts
 
@@ -720,8 +724,8 @@ handlePicDone
     jsr bitMapOff
     jsr savePicture                    ; save picture if user pressed F7. No error check. The routine generates error messages
     jsr readAndEvalErrorChannel        ; read error channel
-    +printStr ERR_BYTE_COUNTER         ; print error message
-    jsr printCRLF
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 9, ERR_BYTE_COUNTER         ; print error message
+    jsr waitForKey
     jmp .mainMenu
 .showValuesAtEnd
     +withPrinterCall showCalcNoSaveHires, .printFinishedTime

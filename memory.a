@@ -267,17 +267,17 @@ saveHiresDataToDisk
 
     lda #.IO_FILE_NUM
     jsr CLOSE
-    +printStr .TXT_SAVE_OK
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 8, .TXT_SAVE_OK
     lda #DISK_IO_OK
     rts
 .showErrorWriteAndClose
     lda #.IO_FILE_NUM
     jsr CLOSE
-    +printStr .TXT_ERROR_WRITE
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 8, .TXT_ERROR_WRITE
     lda #DISK_IO_ERR
     rts
 .showErrorOpen
-    +printStr .TXT_ERROR_OPEN
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 8, .TXT_ERROR_OPEN
     lda #DISK_IO_ERR
     rts
 
