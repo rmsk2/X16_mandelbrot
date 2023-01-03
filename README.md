@@ -62,9 +62,9 @@ by pressing a key. If that key is `F5` you can zoom into the Mandelbrot set (see
 When any other key is pressed the parameters used for calculation are presented. If you then press `RETURN` the
 calculation is stopped and the program returns to the main menu. Any other key resumes the calculation.
 
-If all calculations for a picture have been performed the program waits for a key press. You can press `F5` 
-to zoom further into the set (see below) or press `F7` to save the picture on SD card. If you press any other 
-key the values used for the calculation are printed to the screen.
+If all calculations for a picture have been performed the program waits for a key press while showing the
+picture. You can either press `F5` to zoom further into the set (see below) or press `F7` to save the picture 
+on SD card. If you press any other key the values used for the calculation are printed to the screen.
 
 # Zooming into the Mandelbrot set
 

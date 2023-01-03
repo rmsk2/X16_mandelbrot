@@ -812,10 +812,12 @@ MAIN_MENU_X = 20
 MAIN_MENU_Y = 10
 MAIN_MENU_WIDTH = 40
 MAIN_MENU_HEIGHT = 12
-
+; --------------------------------------------------
+; This routine shows the main menu and handles its input.
+; --------------------------------------------------
 showMainMenu
     lda #147
-    jsr $FFD2
+    jsr CHAROUT                        ; clear screen
 
     +printStrAt MAIN_MENU_X + 4, 2, .MENU_TXT_PROG_NAME
     +printStrAt MAIN_MENU_X + 9, 4, .MENU_TXT_AUTHOR_NAME
@@ -837,6 +839,8 @@ showMainMenu
     +load16BitImmediate .printNothing, VEC_SPECIAL_PRINT
     +printLastValuesAt MAIN_MENU_X + 6, SELECT_ITER_POS_Y + 5
     +petsciiRect MAIN_MENU_X - 1, SELECT_ITER_POS_Y + 4, MAIN_MENU_WIDTH, 9, RECT_NO_CLEAR
+
+    jsr printHelpMessage
 
 .mainMenuInputSelect
     ; Handle inital menu
@@ -864,7 +868,54 @@ showMainMenu
     ; 5. was pressed
 .exitProgram
     lda #147
-    jsr $FFD2
+    jsr CHAROUT                        ; clear screen
+    rts
+
+.TXT_HELP_1
+!byte 36
+!tx "PRESS F5 TO ZOOM INTO THE MANDELBROT"
+.TXT_HELP_2
+!byte 35
+!tx "SET AT ANY TIME. USE F1, F3 AND THE"
+.TXT_HELP_3
+!byte 36
+!tx "CURSOR KEYS TO SELECT A NEW SECTION."
+.TXT_HELP_4
+!byte 33
+!tx "RETURN STARTS THE CALCULATION. F2"
+.TXT_HELP_5
+!byte 21
+!tx  "ABORTS THE SELECTION."
+
+.TXT_HELP_6
+!byte 32
+!tx "IF A CALCULATION IS FINISHED YOU"
+.TXT_HELP_7
+!byte 33
+!tx "CAN PRESS F7 TO SAVE THE PICTURE."
+.TXT_HELP_8
+!byte 35
+!tx "PRESS ANY KEY TO INTERRUPT A CALCU-"
+.TXT_HELP_9
+!byte 7
+!tx "LATION."
+
+
+HELP_Y = 50
+
+printHelpMessage
+    +printStrAt 2, HELP_Y, .TXT_HELP_1
+    +printStrAt 2, HELP_Y+1, .TXT_HELP_2
+    +printStrAt 2, HELP_Y+2, .TXT_HELP_3
+    +printStrAt 2, HELP_Y+3, .TXT_HELP_4
+    +printStrAt 2, HELP_Y+4, .TXT_HELP_5
+    +petsciiRect 1, HELP_Y-1, 36, 5, RECT_NO_CLEAR
+
+    +printStrAt 41, HELP_Y, .TXT_HELP_6
+    +printStrAt 41, HELP_Y+1, .TXT_HELP_7
+    +printStrAt 41, HELP_Y+3, .TXT_HELP_8
+    +printStrAt 41, HELP_Y+4, .TXT_HELP_9
+    +petsciiRect 40, HELP_Y-1, 37, 5, RECT_NO_CLEAR
     rts
 
 ; --------------------------------------------------
