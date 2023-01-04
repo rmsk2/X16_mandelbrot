@@ -163,32 +163,6 @@ restoreHiresData
 
 .IO_FILE_NUM = 1
 
-.TXT_ERROR_OPEN
-!byte 20
-!tx "UNABLE TO OPEN FILE"
-!byte 13
-
-.TXT_ERROR_WRITE
-!byte 21
-!tx "UNABLE TO WRITE FILE"
-!byte 13
-
-.TXT_SAVE_OK
-!byte 23
-!tx "FILE SAVED SUCCESFULLY"
-!byte 13
-
-.TXT_ERROR_LOAD
-!byte 20
-!tx "UNABLE TO LOAD FILE"
-!byte 13
-
-.TXT_LAOD_OK
-!byte 24
-!tx "FILE LOADED SUCCESFULLY"
-!byte 13
-
-
 .CONST_BANK_SIZE
 !byte 00, $20
 
@@ -214,7 +188,6 @@ FILE_NAME_SAVE_LOAD
 .POSTFIX_SEQ_READ
 !byte 4
 !tx ",S,R"
-
 
 .WRITE_FILE_NAME
 !byte 30
@@ -267,17 +240,14 @@ saveHiresDataToDisk
 
     lda #.IO_FILE_NUM
     jsr CLOSE
-    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 8, .TXT_SAVE_OK
     lda #DISK_IO_OK
     rts
 .showErrorWriteAndClose
     lda #.IO_FILE_NUM
     jsr CLOSE
-    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 8, .TXT_ERROR_WRITE
     lda #DISK_IO_ERR
     rts
 .showErrorOpen
-    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 8, .TXT_ERROR_OPEN
     lda #DISK_IO_ERR
     rts
 
@@ -331,12 +301,10 @@ loadHiresDataFromDisk
 
     lda #.IO_FILE_NUM
     jsr CLOSE
-    +printStr .TXT_LAOD_OK
     lda #DISK_IO_OK
     rts
 .showErrorLoadAndClose
     lda #.IO_FILE_NUM
     jsr CLOSE
-    ;+printStr .TXT_ERROR_LOAD
     lda #DISK_IO_ERR
     rts

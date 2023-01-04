@@ -342,10 +342,6 @@ mandelLoop
 .doneMandel
     rts
 
-MAIN_MENU_X = 20
-MAIN_MENU_Y = 10
-MAIN_MENU_WIDTH = 40
-MAIN_MENU_HEIGHT = 12
 
 !ifndef TESTS {
 
@@ -539,6 +535,14 @@ selectIterationDepth
 !byte 10
 !tx "SAVING ..."
 
+.TXT_SAVING_SUCCESS
+!byte 22
+!tx "SAVING WAS SUCCESSFULL"
+
+.TXT_SAVING_FAILED
+!byte 13
+!tx "SAVING FAILED"
+
 .TXT_STORE_SD
 !byte 24
 !tx "STORE PICTURE ON SD CARD"
@@ -565,13 +569,20 @@ savePicture
     +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 6, .TXT_FILE_NAME
     +petsciiRect MAIN_MENU_X - 1, MAIN_MENU_Y + 5, MAIN_MENU_WIDTH, 4, RECT_NO_CLEAR
     +locate MAIN_MENU_X, MAIN_MENU_Y + 7
-    lda #MAX_FILE_NAME_LENGTH                            ; restore input buffer cpacity
+    lda #MAX_FILE_NAME_LENGTH                                          ; restore input buffer cpacity
     sta FILE_NAME_SAVE_LOAD
     +inputStr FILE_NAME_SAVE_LOAD, ALLOWED_FILE_CHARS
     cmp #0
-    beq .noSave                                          ; do nothing if user entered an empty string
+    beq .noSave                                                        ; do nothing if user entered an empty string
     +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 8, .TXT_SAVING    
-    jsr saveHiresDataToDisk                              ; save data from banked RAM to disk
+    jsr saveHiresDataToDisk                                            ; save data from banked RAM to disk
+    cmp #DISK_IO_OK
+    beq .saveIsDone
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 8, .TXT_SAVING_FAILED       ; print error message
+    bra .returnFromSave
+.saveIsDone
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 8, .TXT_SAVING_SUCCESS
+.returnFromSave
     rts
 
 .noSave
@@ -619,7 +630,6 @@ loadAndShowPicture
     beq .doShowAfterLoad               ; do nothing if load failed 
     jsr readAndEvalErrorChannel        ; read error channel
     +printStrAt LOAD_FILE_EDIT_POS_X, LOAD_FILE_EDIT_POS_Y + 2, ERR_BYTE_COUNTER         ; print error message
-    jsr printCRLF    
     jmp .mainMenuInputSelect
 .doShowAfterLoad      
     jsr bitMapOn                       ; This also clears Video RAM
@@ -823,6 +833,11 @@ TIMESTAMP_RUNNING
 .MENU_WRITTEN_IN
 !byte 12
 !tx "IN 2022/2023"
+
+MAIN_MENU_X = 20
+MAIN_MENU_Y = 10
+MAIN_MENU_WIDTH = 40
+MAIN_MENU_HEIGHT = 12
 
 ; --------------------------------------------------
 ; This routine shows the main menu and handles its input.
