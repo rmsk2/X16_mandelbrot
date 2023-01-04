@@ -271,7 +271,8 @@ loadHiresDataFromDisk
 
     +openChannel .IO_FILE_NUM, DEVICE_NUM, 5, .READ_FILE_NAME
     bcc .openLoadOK
-    jmp .showErrorOpen
+    lda #DISK_IO_ERR
+    rts
 .openLoadOK
     lda #32 
     sta .TARGET_BANK_NUM
