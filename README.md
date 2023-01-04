@@ -4,7 +4,7 @@ This program is a further optimzed version of my [Mandelbrot set viewer for the 
 is intended for [Commander X16](https://www.commanderx16.com) (see also here on 
 [GitHub](https://github.com/commanderx16)) and makes use of commander X16 features like:
 
-- More RAM which offers the possibility to precalculate more stuff
+- More RAM which offers the possibility to precompute more stuff
 - More free zero page addresses which allow a broader use of more efficient addressing modes
 - More colours to use in Hires mode (256 for the X16, 2 for the C64)
 - New instructions for the 65C02 (well only `stz` and `bra`)

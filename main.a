@@ -342,14 +342,12 @@ mandelLoop
 .doneMandel
     rts
 
+MAIN_MENU_X = 20
+MAIN_MENU_Y = 10
+MAIN_MENU_WIDTH = 40
+MAIN_MENU_HEIGHT = 12
 
 !ifndef TESTS {
-
-.TXT_VALUES
-!byte 30
-!byte 13
-!tx "VALUES USED FOR CALCULATION"
-!byte 13, 13
 
 .TXT_REAL_PART
 !byte 18
@@ -826,11 +824,6 @@ TIMESTAMP_RUNNING
 !byte 12
 !tx "IN 2022/2023"
 
-
-MAIN_MENU_X = 20
-MAIN_MENU_Y = 10
-MAIN_MENU_WIDTH = 40
-MAIN_MENU_HEIGHT = 12
 ; --------------------------------------------------
 ; This routine shows the main menu and handles its input.
 ; --------------------------------------------------
@@ -993,8 +986,8 @@ progStart
 } else {
 
 TXT_PRECALCULATING
-!byte 19
-!tx "PRECALCULATING ... "
+!byte 20
+!tx "PRECOMPUTATION ... "
 !byte 13
 
 TXT_DONE
