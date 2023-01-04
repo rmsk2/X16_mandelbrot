@@ -18,7 +18,7 @@ clocked at 1MHz. But even if that is taken into account the X16 version is curre
 ![](/result.png?raw=true "Example picture in hires mode")
 
 You have to start the Commander X16 emulator with at least the following options: `-sdcard sdcard.img -rtc` for
-all features to work. `LOAD` the program from SD card und type `RUN` to start it. Alternatively you can utilize 
+all features to work. `LOAD` the program from SD card and type `RUN` to start it. Alternatively you can utilize 
 the `-prg` option to load the program even if it is not stored on the SD-card  image.
 
 # Building the software
