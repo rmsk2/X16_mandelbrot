@@ -13,6 +13,13 @@ LO_NIBBLE
 !byte 0
 
 ; --------------------------------------------------
+; About the string routines: The first byte of a string is a length
+; byte followed by the characters of the string. The maximum length
+; of a string including the length byte is 255 bytes. This also means
+; that a string can contain at most 254 characters.
+; --------------------------------------------------
+
+; --------------------------------------------------
 ; This routine prints a fixed point number to the screen. The address
 ; of the number has to be given in TEMP_PTR/TEMP_PTR+1
 ;
@@ -29,7 +36,6 @@ printNumHex
     lda #45
     jsr CHAROUT
 .egal
-
     ldy #4
 .loopPrint
     lda (TEMP_PTR), y
@@ -52,11 +58,49 @@ printNumHex
     jsr printNumHex
 } 
 
+; --------------------------------------------------
+; This routine prints a 32 bit unsigned number to the screen. The 
+; address of the number has to be given in TEMP_PTR/TEMP_PTR+1
+;
+; No values are returned. 
+; --------------------------------------------------
+print32BitUnsignedCall
+    ldy #4
+.loopPrintUint
+    lda (TEMP_PTR), y
+    jsr printByte
+    dey
+    bne .loopPrintUint
+    jsr printCRLF
+    rts
+
+!macro printUnsigned .addr {
+    lda #<.addr
+    sta TEMP_PTR
+    lda #>.addr
+    sta TEMP_PTR+1
+    jsr print32BitUnsignedCall
+} 
+
+
+; --------------------------------------------------
+; This routine prints a byte in hex and a CRLF to the screen. The
+; value to be printed is taken from the accu.
+;
+; No values are returned. 
+; --------------------------------------------------
 printByteCRLF
     jsr printByte
     jsr printCRLF
     rts
 
+
+; --------------------------------------------------
+; This routine prints a byte in hex to the screen. The
+; value to be printed is taken from the accu.
+;
+; No values are returned. 
+; --------------------------------------------------
 printByte
     jsr splitByte
     stx LO_NIBBLE
@@ -68,6 +112,11 @@ printByte
     jsr CHAROUT
     rts
 
+; --------------------------------------------------
+; This routine prints CRLF to the screen.
+;
+; No values are returned. 
+; --------------------------------------------------
 printCRLF
     lda #13
     jsr CHAROUT
@@ -123,12 +172,6 @@ checkKey
     cmp #0            ; if 0, no key pressed
     rts
 
-; --------------------------------------------------
-; About the string routines: The first byte of a string is a length
-; value followed by the characters of the string. The maximum length
-; of a string including the length byte is 255 bytes. This also means
-; that a string can contain at most 254 characters.
-; --------------------------------------------------
 
 STR_LEN_TEMP
 !byte 0

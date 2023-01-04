@@ -477,13 +477,6 @@ printLastValuesAtCall
     +printFixedPoint STEP_Y
     inc ORIGIN_Y
 
-!ifdef ITER_COUNT {
-    +locateAddr ORIGIN_X, ORIGIN_Y
-    +printStr TXT_ITERATIONS
-    +printFixedPoint ITER_CTR
-    inc ORIGIN_Y
-}
-
     +locateAddr ORIGIN_X, ORIGIN_Y
     jsr .specialWrapper
 
@@ -657,11 +650,11 @@ CONST_CONTINUE = 1
 CONST_FINISH = 0
 
 .TXT_CONTINUE_1
-!byte 39
-!tx "- PRESS RETURN TO GO BACK TO MAIN MENU."
+!byte 36
+!tx "PRESS RETURN TO GO BACK TO MAIN MENU"
 .TXT_CONTINUE_2
-!byte 34
-!tx "- PRESS ANY OTHER KEY TO CONTINUE." 
+!byte 31
+!tx "PRESS ANY OTHER KEY TO CONTINUE" 
 
 ; --------------------------------------------------
 ; This routine shows the values used for calculation.
@@ -757,11 +750,16 @@ TIMESTAMP_RUNNING
 ; VEC_SPECIAL_PRINT jmp vector.
 ; --------------------------------------------------
 .printRunningTime
+!ifdef ITER_COUNT {
+    +printStr TXT_ITERATIONS
+    +printUnsigned ITER_CTR
+} else {
     +getTimestamp TIMESTAMP_RUNNING
     +diffTime TIMESTAMP_CALC_START, TIMESTAMP_RUNNING
     +getTimeStr .TXT_TIMESTAMP, TIMESTAMP_RUNNING
     +printStr .TXT_RUNNING_TIME
     +printStr .TXT_TIMESTAMP
+}
     rts
 
 
@@ -773,11 +771,16 @@ TIMESTAMP_RUNNING
 ; routine by assigning it to the VEC_SPECIAL_PRINT jmp vector.
 ; --------------------------------------------------
 .printFinishedTime
+!ifdef ITER_COUNT {
+    +printStr TXT_ITERATIONS
+    +printUnsigned ITER_CTR
+} else {
     +copyTs TIMESTAMP_CALC_END, .TIMESTAMP_END_TEMP
     +diffTime TIMESTAMP_CALC_START, .TIMESTAMP_END_TEMP
     +getTimeStr .TXT_TIMESTAMP, .TIMESTAMP_END_TEMP
     +printStr .TXT_FINISHED_TIME
     +printStr .TXT_TIMESTAMP
+}
     rts
 
 
