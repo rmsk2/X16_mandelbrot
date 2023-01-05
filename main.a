@@ -567,7 +567,7 @@ savePicture
     +petsciiRect MAIN_MENU_X - 1, MAIN_MENU_Y - 1, MAIN_MENU_WIDTH, 3, RECT_NO_CLEAR
 
     +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 6, .TXT_FILE_NAME
-    +petsciiRect MAIN_MENU_X - 1, MAIN_MENU_Y + 5, MAIN_MENU_WIDTH, 4, RECT_NO_CLEAR
+    +petsciiRect MAIN_MENU_X - 1, MAIN_MENU_Y + 5, MAIN_MENU_WIDTH, 3, RECT_NO_CLEAR
     +locate MAIN_MENU_X, MAIN_MENU_Y + 7
     lda #MAX_FILE_NAME_LENGTH                                          ; restore input buffer cpacity
     sta FILE_NAME_SAVE_LOAD
@@ -601,15 +601,11 @@ loadPicture
     sta FILE_NAME_SAVE_LOAD
     +locate LOAD_FILE_EDIT_POS_X, LOAD_FILE_EDIT_POS_Y + 1
     +inputStr FILE_NAME_SAVE_LOAD, ALLOWED_FILE_CHARS
-    pha
-    jsr printCRLF
-    pla
     cmp #0
     beq .noLoad                                         ; do nothing if user entered empty string
     +printStrAt LOAD_FILE_EDIT_POS_X, LOAD_FILE_EDIT_POS_Y + 2, .TXT_LOADING    
     jsr loadHiresDataFromDisk                           ; load data and store it in banked RAM
     rts
-
 .noLoad
     lda #DISK_IO_ERR
     rts
@@ -652,6 +648,71 @@ loadAndShowPicture
     cmp #CONST_CONTINUE                ; Does user want to end the program?
     beq .waitForCommand                ; No => continue showing picture
     jmp .mainMenu
+
+
+; --------------------------------------------------
+; This routine reads the error channel and prints the result in the FILNAME
+; area of the main menu.
+; 
+; The routine has no return values. The disk error read from the error channel 
+; is stored at address DISK_ERROR.
+; --------------------------------------------------
+.loadHelper
+    jsr readAndEvalErrorChannel                                                 ; read error channel
+    +clearLineAt MAIN_MENU_X, LOAD_FILE_EDIT_POS_Y + 2, MAIN_MENU_WIDTH
+    +printStrAt MAIN_MENU_X, LOAD_FILE_EDIT_POS_Y + 2, ERR_BYTE_COUNTER         ; print error message
+    rts
+
+
+; --------------------------------------------------
+; This routine loads a parameter set from disk.
+; 
+; The routine has no return values.
+; --------------------------------------------------
+loadParameters
+    +clearLineAt MAIN_MENU_X, LOAD_FILE_EDIT_POS_Y + 2, MAIN_MENU_WIDTH
+    lda #MAX_FILE_NAME_LENGTH                                                   ; restore input buffer cpacity
+    sta FILE_NAME_SAVE_LOAD
+    +locate LOAD_FILE_EDIT_POS_X, LOAD_FILE_EDIT_POS_Y + 1                      ; place cursor at input area
+    +inputStr FILE_NAME_SAVE_LOAD, ALLOWED_FILE_CHARS                           ; let user enter a string
+    cmp #0
+    beq .noLoadParam                                                            ; do nothing if user entered empty string
+    +printStrAt LOAD_FILE_EDIT_POS_X, LOAD_FILE_EDIT_POS_Y + 2, .TXT_LOADING    ; show loading ... message
+    jsr loadParametersFromDisk                                                  ; load parameters from disk
+    cmp #DISK_IO_OK
+    bne .noLoadParam
+    +petsciiRect MAIN_MENU_X - 1, SELECT_ITER_POS_Y + 4, MAIN_MENU_WIDTH, 9, RECT_CLEAR ; clear output area
+    +load16BitImmediate .printNothing, VEC_SPECIAL_PRINT                        ; set vector for special output routine
+    +printLastValuesAt MAIN_MENU_X + 6, SELECT_ITER_POS_Y + 5                   ; print new parameters
+    jsr .loadHelper
+    lda DISK_ERROR
+    cmp #0
+    bne .paramLoadError 
+    jmp .restart
+.noLoadParam
+    jsr .loadHelper
+.paramLoadError
+    jmp .mainMenuInputSelect
+
+
+; --------------------------------------------------
+; This routine saves the current parameter set to disk.
+; 
+; The routine has no return values.
+; --------------------------------------------------
+saveParameters
+    +clearLineAt MAIN_MENU_X, LOAD_FILE_EDIT_POS_Y + 2, MAIN_MENU_WIDTH
+    lda #MAX_FILE_NAME_LENGTH                                                   ; restore input buffer cpacity
+    sta FILE_NAME_SAVE_LOAD
+    +locate LOAD_FILE_EDIT_POS_X, LOAD_FILE_EDIT_POS_Y + 1                      ; place cursor at input area
+    +inputStr FILE_NAME_SAVE_LOAD, ALLOWED_FILE_CHARS                           ; let user enter a string
+    cmp #0
+    beq .noSaveParam                                                            ; do nothing if user entered empty string
+    +printStrAt LOAD_FILE_EDIT_POS_X, LOAD_FILE_EDIT_POS_Y + 2, .TXT_SAVING     ; show saving ... message
+    jsr saveParametersToDisk                                                    ; save parameters to disk
+.noSaveParam
+    jsr .loadHelper
+    jmp .mainMenuInputSelect
 
 
 CONST_CONTINUE = 1
@@ -725,7 +786,8 @@ handlePicDone
     jsr bitMapOff
     jsr savePicture                    ; save picture if user pressed F7. No error check. The routine generates error messages
     jsr readAndEvalErrorChannel        ; read error channel
-    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 9, ERR_BYTE_COUNTER         ; print error message
+    +clearLineAt MAIN_MENU_X, MAIN_MENU_Y + 8, MAIN_MENU_WIDTH
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 8, ERR_BYTE_COUNTER         ; print error message
     jsr waitForKey
     jmp .mainMenu
 .showValuesAtEnd
@@ -815,12 +877,21 @@ TIMESTAMP_RUNNING
 .MENU_4
 !byte 21
 !tx "4. USE CURRENT VALUES"
+
+.MENU_7
+!byte 18
+!tx "5. LOAD PARAMETERS"
+.MENU_8
+!byte 18
+!tx "6. SAVE PARAMETERS"
+
+
 .MENU_5
 !byte 7
-!tx "5. EXIT"
+!tx "7. EXIT"
 .MENU_6
-!byte 25
-!tx "PRESS KEY 1, 2, 3, 4 OR 5"
+!byte 31
+!tx "PRESS KEY 1, 2, 3, 4, 5, 6 OR 7"
 
 .MENU_TXT_PROG_NAME
 !byte 32
@@ -851,9 +922,11 @@ showMainMenu
     +printStrAt MAIN_MENU_X + 13, 6, .MENU_WRITTEN_IN
 
     +printStrAt MAIN_MENU_X, MAIN_MENU_Y, .MENU_1
-    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 2, .MENU_2
-    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 4, .MENU_3
-    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 6, .MENU_4
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 1, .MENU_2
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 2, .MENU_3
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 3, .MENU_4
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 5, .MENU_7
+    +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 6, .MENU_8
     +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 9, .MENU_5
     +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 11, .MENU_6
     +printStrAt LOAD_FILE_EDIT_POS_X, LOAD_FILE_EDIT_POS_Y, .TXT_FILE_NAME
@@ -890,9 +963,17 @@ showMainMenu
     jmp .restart                       ; yes
 .checkFor5
     cmp #53                            ; 5. pressed ?
+    bne .checkFor6
+    jmp loadParameters                 ; yes
+.checkFor6
+    cmp #54                            ; 6. pressed ?
+    bne .checkFor7
+    jmp saveParameters                 ; yes
+.checkFor7
+    cmp #55                            ; 7. pressed ?
     beq .exitProgram
     jmp .mainMenuInputSelect           ; No => try again
-    ; 5. was pressed
+    ; 7. was pressed
 .exitProgram
     lda #147
     jsr CHAROUT                        ; clear screen

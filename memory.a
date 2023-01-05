@@ -309,3 +309,66 @@ loadHiresDataFromDisk
     jsr CLOSE
     lda #DISK_IO_ERR
     rts
+
+
+; --------------------------------------------------
+; This routine saves the the calculation parameters to a file on disk. 
+; The file name has to be specified as a string at address FILE_NAME_SAVE_LOAD.
+;
+; This routine returns DISK_IO_OK in accu if no error occurred.
+; --------------------------------------------------
+saveParametersToDisk
+    +strCpy .PREFIX_OVERWRITE, .WRITE_FILE_NAME
+    +strCat FILE_NAME_SAVE_LOAD, .WRITE_FILE_NAME
+    +strCat .POSTFIX_SEQ, .WRITE_FILE_NAME
+
+    +openChannel .IO_FILE_NUM, DEVICE_NUM, 5, .WRITE_FILE_NAME
+    bcc .openOKParam
+    jmp .showErrorOpenParam
+.openOKParam
+    +writeBufferAddr .IO_FILE_NUM, STEP_X, .CONST_PARAM_SIZE
+    cmp #DISK_IO_OK
+    bne .showErrorWriteAndCloseParam
+
+    lda #.IO_FILE_NUM
+    jsr CLOSE
+    lda #DISK_IO_OK
+    rts
+.showErrorWriteAndCloseParam
+    lda #.IO_FILE_NUM
+    jsr CLOSE
+    lda #DISK_IO_ERR
+    rts
+.showErrorOpenParam
+    lda #DISK_IO_ERR
+    rts
+
+
+; --------------------------------------------------
+; This routine loads calculation parameters. The file name has to be specified 
+; as a string at address FILE_NAME_SAVE_LOAD.
+;
+; This routine returns DISK_IO_OK in accu if no error occurred.
+; --------------------------------------------------
+loadParametersFromDisk
+    +strCpy FILE_NAME_SAVE_LOAD, .READ_FILE_NAME
+    +strCat .POSTFIX_SEQ_READ, .READ_FILE_NAME
+
+    +openChannel .IO_FILE_NUM, DEVICE_NUM, 5, .READ_FILE_NAME
+    bcc .openLoadOKParam
+    lda #DISK_IO_ERR
+    rts
+.openLoadOKParam
+    +readBufferAddr .IO_FILE_NUM, STEP_X, .CONST_PARAM_SIZE
+    cmp #DISK_IO_OK
+    bne .showErrorLoadAndCloseParam
+
+    lda #.IO_FILE_NUM
+    jsr CLOSE
+    lda #DISK_IO_OK
+    rts
+.showErrorLoadAndCloseParam
+    lda #.IO_FILE_NUM
+    jsr CLOSE
+    lda #DISK_IO_ERR
+    rts

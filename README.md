@@ -45,10 +45,17 @@ the 80ies or 90ies.
 
 # Using the program
 
-When you start the program you can select whether you want 1. to load a picture and its corresponding values
-from SD card, 2. to start a new calculation using the current values but with a different iteration depth, 3. to
-reset to the default values and start a new calculation, 4. start a new calculation using the current values 
-or 5. to exit again. An option is selected by pressing the key corresponding to the number.
+When you start the program you can select whether you want 
+
+1. to load a picture and its corresponding valuesfrom SD card 
+2. to start a new calculation using the current values but with a different iteration depth
+3. to reset to the default values and start a new calculation
+4. start a new calculation using the current values
+5. to load calculation paramaters and start a new calculation
+6. to save the current calculation parameters
+7. to exit again. 
+
+An option is selected by pressing the key corresponding to the number.
 
 ![](/main_menu.png?raw=true "Main menu")
 
@@ -56,7 +63,7 @@ When you select option 1. the picture data and its associated parameters are loa
 on the screen. You can zoom into the picture by pressing `F5` (see *Zooming into the Mandelbrot set*) below or 
 you can look at the parameters by pressing any other key.
 
-When you select option 2. or 3. or 4. a new picture is calculated. The calculation can be interrupted at any time
+When you select option 2. ,3., 4. or .5 a new picture is calculated. The calculation can be interrupted at any time
 by pressing a key. If that key is `F5` you can zoom into the Mandelbrot set (see corresponding section below).
 When any other key is pressed the parameters used for calculation are presented. If you then press `RETURN` the
 calculation is stopped and the program returns to the main menu. Any other key resumes the calculation.
