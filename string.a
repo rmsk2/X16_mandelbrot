@@ -75,10 +75,7 @@ print32BitUnsignedCall
     rts
 
 !macro printUnsigned .addr {
-    lda #<.addr
-    sta TEMP_PTR
-    lda #>.addr
-    sta TEMP_PTR+1
+    +load16BitImmediate .addr, TEMP_PTR
     jsr print32BitUnsignedCall
 } 
 

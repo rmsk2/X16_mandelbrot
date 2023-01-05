@@ -45,6 +45,17 @@ TEXT_CARRY_SET
     plp
 }
 
+!macro perfTestUint .func, .operL, .operR, .info {    
+    +printStr .info
+    jsr printCRLF
+    +printUnsigned .operL
+    +printUnsigned .operR
+    +callFunc .func, .operL, .operR
+    php
+    +printUnsigned .operR
+    plp
+}
+
 !macro perfTestMono .func, .operL, .info {    
     +printStr .info
     jsr printCRLF
@@ -73,6 +84,18 @@ TEXT_CARRY_SET
 .testOK
     +printStr TEXT_OK
 }
+
+!macro expectValueUint .val, .ref {
+    +callFunc isEqual32Bit, .val, .ref
+    beq .testOK
+    +printStr TEXT_FAILURE
+    +printStr TEXT_EXPECTED
+    +printUnsigned .ref
+    jmp testEnd
+.testOK
+    +printStr TEXT_OK
+}
+
 
 !macro expectEqual {
     beq .testOK 
@@ -436,8 +459,8 @@ testMain
     +perfTest add32Bit, .VAL_1_ADD_1, .VAL_2_ADD_1, .TEXT_ADD_1
     +expectValue .VAL_2_ADD_1, .ADD_1_RES 
 ; --------------------------------------------------    
-    +perfTest mul32BitUnsignedInt, .VAL_1_MUL_3, .VAL_2_MUL_3, .TEXT_MUL_3
-    +expectValue .VAL_2_MUL_3, .MUL_3_RES 
+    +perfTestUint mul32BitUnsignedInt, .VAL_1_MUL_3, .VAL_2_MUL_3, .TEXT_MUL_3
+    +expectValueUint .VAL_2_MUL_3, .MUL_3_RES 
 ; -------------------------------------------------- 
     +printStr .TXT_READING_RTC_I2C 
     +getTimeStr .TIME_STR, RTCI2C
@@ -509,8 +532,8 @@ testMain
     +perfTest mul32BitNormalized, .VAL_1_MUL_BUG, .VAL_2_MUL_BUG, .TEXT_MUL_BUG
     +expectValue .VAL_2_MUL_BUG, .VAL_3_MUL_BUG 
 ; --------------------------------------------------    
-    +petsciiRect 7, 40, 20, 1, RECT_NO_CLEAR
-    +petsciiRect 5, 7, 15, 20, RECT_CLEAR
+    ;+petsciiRect 7, 40, 20, 1, RECT_NO_CLEAR
+    ;+petsciiRect 5, 7, 15, 20, RECT_CLEAR
 ; --------------------------------------------------    
 testEnd
     rts
