@@ -686,7 +686,6 @@ loadParameters
     +printLastValuesAt MAIN_MENU_X + 6, SELECT_ITER_POS_Y + 5                   ; print new parameters
     jsr .loadHelper
     lda DISK_ERROR
-    cmp #0
     bne .paramLoadError 
     jmp .restart
 .noLoadParam
