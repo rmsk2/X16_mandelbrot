@@ -737,11 +737,11 @@ showCalcParameters
 showCalcNoSaveHires
     jsr bitMapOff
 
-    +printLastValuesAt MAIN_MENU_X + 6, 17
+    +printLastValuesAt MAIN_MENU_X + 6, 16
     +printStrAt MAIN_MENU_X, MAIN_MENU_Y, .TXT_CONTINUE_1
     +printStrAt MAIN_MENU_X, MAIN_MENU_Y + 2, .TXT_CONTINUE_2
-    +petsciiRect MAIN_MENU_X - 1, MAIN_MENU_Y - 1, MAIN_MENU_WIDTH, 4, RECT_NO_CLEAR
-    +petsciiRect MAIN_MENU_X - 1, 16, MAIN_MENU_WIDTH, 9, RECT_NO_CLEAR
+    +petsciiRect MAIN_MENU_X - 1, MAIN_MENU_Y - 1, MAIN_MENU_WIDTH, 3, RECT_NO_CLEAR
+    +petsciiRect MAIN_MENU_X - 1, 15, MAIN_MENU_WIDTH, 9, RECT_NO_CLEAR
     jsr waitForKey
     cmp #13                            ; user pressed return?
     beq .endShowContinue               ; Yes => Tell caller user wants to stop 
