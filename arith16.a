@@ -248,13 +248,8 @@ SQ_TAB_MSB
 }
 
 !ifdef USE_MUL_TABLE {
-; --------------------------------------------------
-; This subroutine takes its two operands in X and A and multiplies them. This is achieved
-; by a multiplication table that is stored in banked RAM.
-;
-; The high byte of the result is returned in accu, the lo byte in the X register.
-; --------------------------------------------------
-mul16Bit
+
+!macro mul16BitBankedRAM {
     sta TEMP_VAL_A
     and #%00000111                   ; bank num for lo byte is lower 3 bits of value a and a 0
     asl                              ; make room for lower bit for hi byte bank
@@ -277,7 +272,17 @@ mul16Bit
     lda 0
     eor #$01                        ; hi bytes are stored in the bank where bit 0 is set
     sta 0
-    lda (PRE_PTR), y
+    lda (PRE_PTR), y    
+}
+
+; --------------------------------------------------
+; This subroutine takes its two operands in X and A and multiplies them. This is achieved
+; by a multiplication table that is stored in banked RAM.
+;
+; The high byte of the result is returned in accu, the lo byte in the X register.
+; --------------------------------------------------
+mul16Bit
+    +mul16BitBankedRAM
     rts
 
 ; --------------------------------------------------

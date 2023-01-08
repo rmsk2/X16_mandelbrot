@@ -10,7 +10,7 @@ is intended for [Commander X16](https://www.commanderx16.com) (see also here on
 - New instructions for the 65C02 (well only `stz` and `bra`)
 
 Currently the default section of the Mandelbrot set (see screenshot below) using the X16s full resolution of 320x240 
-at a depth of 24 iterations (in total 717022 iterations) is calculated in under 13 minutes at about 950 iterations/sec. 
+at a depth of 24 iterations (in total 717022 iterations) is calculated in about 12 minutes at close to 1000 iterations/sec. 
 The  C64 version takes two and a half hours to calculate the same visualisation in a resolution of 320x200. Of course 
 the biggest part of the speedup stems from the fact that the 65C02 in the X16 runs at 8MHz where the 6510 in a C64 is
 clocked at 1MHz. But even if that is taken into account the X16 version is currently faster.
@@ -104,3 +104,5 @@ I can do about that.
 performs in the same way on a real machine
 - I have not yet tested whether my fixed point math routines are actually faster than the floating point routines
 in the X16s math library and if they are really faster I don't know by how much.
+- Currently the 32 bit multiplication uses the text book algorithm taught at school for manual multiplication. I could test
+whether Karatsuba's algorithm speeds things up at least a little even in this (close to a corner) case.

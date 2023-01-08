@@ -144,7 +144,8 @@ mul32BitUnsigned
     ldy COUNT_R                   ; load COUNT_R digit of right operand in accu
     iny                           ; skip sign byte
     lda (ADDR_OPER_RIGHT), y
-    jsr mul16Bit                  ; multiply these 8 bit values. Result: MSB in accu, LSB in x register
+    ;jsr mul16Bit                  ; multiply these 8 bit values. Result: MSB in accu, LSB in x register
+    +mul16BitBankedRAM
     sta HELP_MUL                  ; store MSB of multiplication result in temp variable
     lda COUNT_L                   ; calculate index of positon where to add the 16 bit result
     clc
@@ -267,7 +268,8 @@ square32BitUnsigned
     ldy COUNT_R                   ; load COUNT_R digit of right operand in accu
     iny                           ; skip sign byte
     lda (ADDR_OPER_LEFT), y
-    jsr mul16Bit                  ; multiply these 8 bit values. Result MSB in accu, LSB in x register
+    ;jsr mul16Bit                  ; multiply these 8 bit values. Result MSB in accu, LSB in x register
+    +mul16BitBankedRAM
     pha                           ; save accu, x must not be changed
     ; calculate buffer address
     ; and store partial result for reuse
@@ -307,7 +309,9 @@ square32BitUnsigned
     inc COUNT_L                   ; Move processing to next digit of left operand
     lda COUNT_L
     cmp #4
-    bne .loopSquare
+    beq .nextDigit
+    jmp .loopSquare
+.nextDigit    
     lda #0                        ; Move processing to next digit of right operand
     sta COUNT_L
     inc COUNT_R
