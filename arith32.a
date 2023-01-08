@@ -239,31 +239,22 @@ square32BitUnsigned
     lda COUNT_L
     cmp COUNT_R
     beq .squareOnly               ; When looping variables are equal we have to square an 8 bit "digit"
+    bcc .nothingToDo
     bra .normal                   ; no special case we have to do a normal 8 by 8 bit multiplication
+.nothingToDo
+    jmp .noExtraCarrySquare
 .squareOnly
     ; squaring is faster than 16 bit multiplication
     tay                           ; accu holds COUNT_L
     iny                           ; skip sign byte
     lda (ADDR_OPER_LEFT), y       ; load COUNT_L digit of left operand
-    beq .noExtraCarrySquare       ; result will be zero => skip rest of code
+    bne .contSquare
+    jmp .noExtraCarrySquare       ; result will be zero => skip rest of code
+.contSquare
     tay
     lda SQ_TAB_LSB, y              
     tax                           ; lo byte in x
     lda SQ_TAB_MSB, y             ; hi byte in accu
-    bra .processResult
-.normal
-    ldy COUNT_L
-    iny                           ; skip sign byte
-    lda (ADDR_OPER_LEFT), y       ; load COUNT_L digit of left operand 
-    beq .noExtraCarrySquare       ; result will be zero => skip rest of code
-    tax                           ; and store it in X register
-    ldy COUNT_R                   ; load COUNT_R digit of right operand in accu
-    iny                           ; skip sign byte
-    lda (ADDR_OPER_LEFT), y
-    beq .noExtraCarrySquare       ; result will be zero => skip rest of code
-    ;jsr mul16Bit                 ; multiply these 8 bit values. Result MSB in accu, LSB in x register
-    +mul16BitBankedRAM
-.processResult
     sta HELP_MUL                  ; store MSB of multiplication result in temp variable
     lda COUNT_L                   ; calculate index of positon where to add the 16 bit result
     clc
@@ -277,6 +268,61 @@ square32BitUnsigned
     lda HELP_MUL                  ; add MSB to intermediate result
     adc TEMP_MUL, y
     sta TEMP_MUL, y
+    bcs .carryLoopSquare2
+    jmp .noExtraCarrySquare
+.carryLoopSquare2                 ; handle the case where one or more carries to the following digits occur
+    iny
+    cpy #8                        
+    beq .noExtraCarrySquare       ; we are beyond the final byte. In this case ignore carry
+    lda #1                        ; add carry to intermediate result
+    adc TEMP_MUL, y               ; due to the cpy #8 above the carry is always clear at this instruction
+    sta TEMP_MUL, y
+    bcs .carryLoopSquare2         ; Another carry occurred after adding the carry => Let's do this again
+    bra .noExtraCarrySquare
+
+.normal
+    ldy COUNT_L
+    iny                           ; skip sign byte
+    lda (ADDR_OPER_LEFT), y       ; load COUNT_L digit of left operand 
+    beq .noExtraCarrySquare       ; result will be zero => skip rest of code
+    tax                           ; and store it in X register
+    ldy COUNT_R                   ; load COUNT_R digit of right operand in accu
+    iny                           ; skip sign byte
+    lda (ADDR_OPER_LEFT), y
+    beq .noExtraCarrySquare       ; result will be zero => skip rest of code
+    ;jsr mul16Bit                 ; multiply these 8 bit values. Result MSB in accu, LSB in x register
+    +mul16BitBankedRAM
+    ; multiply multiplication result by two
+    sta HELP_MUL                  
+    txa
+    asl
+    sta HELP_MUL_2
+    rol HELP_MUL
+    stz HELP_MUL_3
+    bcc .noHiByte
+    inc HELP_MUL_3
+.noHiByte
+    ; add 3 byte intermediate result to TEMP_MUL
+    lda COUNT_L                   ; calculate index of positon where to add the 24 bit result
+    clc
+    adc COUNT_R                   ; This position is COUNT_L + COUNT_R
+    tay                           ; move calculated index to y register
+    txa                           ; move LSB of multiplication result to accu
+    ;clc                          ; COUNT_L + COUNT_R does not produce a carry => carry is always clear at this point
+    lda HELP_MUL_2
+    adc TEMP_MUL, y               ; add LSB to intermediate result
+    sta TEMP_MUL, y
+    iny
+    lda HELP_MUL                  ; add MSB to intermediate result
+    adc TEMP_MUL, y
+    sta TEMP_MUL, y
+    iny
+    tya
+    and #8                        ; compare with 8 without influencing the carry
+    bne .noExtraCarrySquare
+    lda HELP_MUL_3
+    adc TEMP_MUL, y
+    sta TEMP_MUL, y
     bcc .noExtraCarrySquare
 .carryLoopSquare                  ; handle the case where one or more carries to the following digits occur
     iny
@@ -286,6 +332,7 @@ square32BitUnsigned
     adc TEMP_MUL, y               ; due to the cpy #8 above the carry is always clear at this instruction
     sta TEMP_MUL, y
     bcs .carryLoopSquare          ; Another carry occurred after adding the carry => Let's do this again
+
 .noExtraCarrySquare
     inc COUNT_L                   ; Move processing to next digit of left operand
     lda COUNT_L

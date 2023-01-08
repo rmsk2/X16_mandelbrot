@@ -8,11 +8,11 @@ ARITH_SCRATCH3 = $32
 MEM_CPY_PTR    = $33;/$34
 IO_PTR2 = $35;/$36
 IO_PTR3 = $37;/$38
-; $39 is free
+HELP_MUL_3 = $39 
 TEMP_PTR = $3A;$3B
 TEMP_PTR2 = $3C;$3D
 IO_PTR = $3E;$3F
-; $40 is free
+HELP_MUL_2 = $40
 PRE_PTR = $41
 PRE_PTR_HI = $42
 ADDR_OPER_LEFT = $43;$44
