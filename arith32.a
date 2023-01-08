@@ -239,7 +239,7 @@ square32BitUnsigned
     lda COUNT_L
     cmp COUNT_R
     beq .squareOnly               ; When looping variables are equal we have to square an 8 bit "digit"
-    bcc .nothingToDo
+    bcc .nothingToDo              ; We have already handled this case
     bra .normal                   ; no special case we have to do a normal 8 by 8 bit multiplication
 .nothingToDo
     jmp .noExtraCarrySquare
