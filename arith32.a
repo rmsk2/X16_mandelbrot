@@ -139,12 +139,14 @@ mul32BitUnsigned
 .loopMul
     ldy COUNT_L
     iny                           ; skip sign byte
-    lda (ADDR_OPER_LEFT), y       ; load COUNT_L digit of left operand 
+    lda (ADDR_OPER_LEFT), y       ; load COUNT_L digit of left operand
+    beq .noAdditionalCarry        ; result will be zero skip => rest of code
     tax                           ; and store it in X register
     ldy COUNT_R                   ; load COUNT_R digit of right operand in accu
     iny                           ; skip sign byte
     lda (ADDR_OPER_RIGHT), y
-    ;jsr mul16Bit                  ; multiply these 8 bit values. Result: MSB in accu, LSB in x register
+    beq .noAdditionalCarry        ; result will be zero => skip rest of code
+    ;jsr mul16Bit                 ; multiply these 8 bit values. Result: MSB in accu, LSB in x register
     +mul16BitBankedRAM
     sta HELP_MUL                  ; store MSB of multiplication result in temp variable
     lda COUNT_L                   ; calculate index of positon where to add the 16 bit result
@@ -206,11 +208,11 @@ mul32BitUnsignedInt
     rts
 
 
-SQUARE_BUFFER_LSB
-!byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+; SQUARE_BUFFER_LSB
+; !byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
-SQUARE_BUFFER_MSB
-!byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+; SQUARE_BUFFER_MSB
+; !byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
 
 ; --------------------------------------------------
@@ -237,51 +239,30 @@ square32BitUnsigned
     lda COUNT_L
     cmp COUNT_R
     beq .squareOnly               ; When looping variables are equal we have to square an 8 bit "digit"
-    bcc .transpose                ; When COUNT_L is less than COUNT_R we have already calculated that result
     bra .normal                   ; no special case we have to do a normal 8 by 8 bit multiplication
 .squareOnly
     ; squaring is faster than 16 bit multiplication
     tay                           ; accu holds COUNT_L
     iny                           ; skip sign byte
-    lda (ADDR_OPER_LEFT), y       ; load COUNT_L digit of left operand 
+    lda (ADDR_OPER_LEFT), y       ; load COUNT_L digit of left operand
+    beq .noExtraCarrySquare       ; result will be zero => skip rest of code
     tay
     lda SQ_TAB_LSB, y              
     tax                           ; lo byte in x
     lda SQ_TAB_MSB, y             ; hi byte in accu
     bra .processResult
-.transpose        
-    ; retrieve previously calculated result
-    lda COUNT_R                   ; calculate buffer address
-    asl
-    asl
-    ora COUNT_L                   ; offset into buffer is COUNT_R | COUNT_L, i.e. transposed wrt write operation
-    tay    
-    lda SQUARE_BUFFER_LSB, y      ; load lo byte
-    tax
-    lda SQUARE_BUFFER_MSB, y      ; load hi byte
-    bra .processResult
 .normal
     ldy COUNT_L
     iny                           ; skip sign byte
     lda (ADDR_OPER_LEFT), y       ; load COUNT_L digit of left operand 
+    beq .noExtraCarrySquare       ; result will be zero => skip rest of code
     tax                           ; and store it in X register
     ldy COUNT_R                   ; load COUNT_R digit of right operand in accu
     iny                           ; skip sign byte
     lda (ADDR_OPER_LEFT), y
-    ;jsr mul16Bit                  ; multiply these 8 bit values. Result MSB in accu, LSB in x register
+    beq .noExtraCarrySquare       ; result will be zero => skip rest of code
+    ;jsr mul16Bit                 ; multiply these 8 bit values. Result MSB in accu, LSB in x register
     +mul16BitBankedRAM
-    pha                           ; save accu, x must not be changed
-    ; calculate buffer address
-    ; and store partial result for reuse
-    lda COUNT_L  
-    asl
-    asl
-    ora COUNT_R                   ; offset into buffer is COUNT_L | COUNT_R
-    tay
-    txa
-    sta SQUARE_BUFFER_LSB, y      ; store lo byte in buffer 
-    pla                           ; restore accu
-    sta SQUARE_BUFFER_MSB, y      ; store hi byte in buffer
 .processResult
     sta HELP_MUL                  ; store MSB of multiplication result in temp variable
     lda COUNT_L                   ; calculate index of positon where to add the 16 bit result
