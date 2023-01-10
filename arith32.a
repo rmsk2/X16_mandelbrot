@@ -130,7 +130,7 @@ mul32BitUnsigned
     sta COUNT_L                   ; clear counter for digits of left operand
     sta COUNT_R                   ; clear counter for digits of right operand
     ldx #7                        ; clear temp buffer
-    lda #0
+    ;lda #0                       ; accu is zero here
 .clear                            
     sta TEMP_MUL,X
     dex
@@ -175,8 +175,8 @@ mul32BitUnsigned
     lda COUNT_L
     cmp #4
     bne .loopMul
-    lda #0                        ; Move processing to next digit of right operand
-    sta COUNT_L
+    ;lda #0                        ; Move processing to next digit of right operand
+    stz COUNT_L
     inc COUNT_R
     lda COUNT_R
     cmp #4
@@ -513,9 +513,9 @@ halve32Bit
 ; --------------------------------------------------
 add32Bit
     +prepareAddSub
-    ldy #0
-    lda (ADDR_OPER_LEFT), y
-    eor (ADDR_OPER_RIGHT), y
+    ;ldy #0
+    lda (ADDR_OPER_LEFT)
+    eor (ADDR_OPER_RIGHT)
     beq .simpleAdd                         ; signs are equal => simply add values
     lda LEFT_GREATER_EQUAL_RIGHT
     bne .normalSub
@@ -528,8 +528,8 @@ add32Bit
     ; normal subtraction
     ; sign of result is sign of opL
     ; result is OpR
-    lda (ADDR_OPER_LEFT), y                ; set sign of result   
-    sta (ADDR_OPER_RIGHT), y
+    lda (ADDR_OPER_LEFT)                 ; set sign of result   
+    sta (ADDR_OPER_RIGHT)
     jsr sub32BitUnsigned
     rts
 .simpleAdd
@@ -548,18 +548,18 @@ add32Bit
 ; --------------------------------------------------
 sub32Bit
     +prepareAddSub
-    ldy #0
-    lda (ADDR_OPER_LEFT), y
-    eor (ADDR_OPER_RIGHT), y
+    ;ldy #0
+    lda (ADDR_OPER_LEFT)
+    eor (ADDR_OPER_RIGHT)
     bne .simpleAdd2                       ; signs are different
     lda LEFT_GREATER_EQUAL_RIGHT
     bne .normalSub2
     ; switched subtraction
     ; sign of result is flipped
     ; result is opR
-    lda (ADDR_OPER_RIGHT), y               ; set sign of result
+    lda (ADDR_OPER_RIGHT)               ; set sign of result
     eor #1
-    sta (ADDR_OPER_RIGHT), y
+    sta (ADDR_OPER_RIGHT)
     jsr sub32SwitchedUnsigned
     rts
 .normalSub2
@@ -572,8 +572,8 @@ sub32Bit
     ; add both operands
     ; sign of result is sign of opL
     ; result is opR
-    lda (ADDR_OPER_LEFT), y               ; set sign of result
-    sta (ADDR_OPER_RIGHT), y
+    lda (ADDR_OPER_LEFT)               ; set sign of result
+    sta (ADDR_OPER_RIGHT)
     jsr add32BitUnsigned
     rts
 
