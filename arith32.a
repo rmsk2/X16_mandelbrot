@@ -482,19 +482,19 @@ halve32Bit
     lda (ADDR_OPER_LEFT), y
     cmp (ADDR_OPER_RIGHT), y
     beq .next1                   ; continue if equal
-    bra .endCmp                          ; carry contains result                   
+    bra .endCmp                  ; carry contains result                   
 .next1
     dey
     lda (ADDR_OPER_LEFT), y
     cmp (ADDR_OPER_RIGHT), y
     beq .next2                   ; continue if equal
-    bra .endCmp                          ; carry contains result
+    bra .endCmp                  ; carry contains result
 .next2
     dey
     lda (ADDR_OPER_LEFT), y
     cmp (ADDR_OPER_RIGHT), y
     beq .next3                   ; continue if equal
-    bra .endCmp                          ; carry contains result
+    bra .endCmp                  ; carry contains result
 .next3                           ; We get here only if all bytes before were equal
     dey
     lda (ADDR_OPER_LEFT), y
