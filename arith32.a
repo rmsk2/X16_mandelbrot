@@ -208,12 +208,6 @@ mul32BitUnsignedInt
     rts
 
 
-; SQUARE_BUFFER_LSB
-; !byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-
-; SQUARE_BUFFER_MSB
-; !byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-
 !macro carryLoop {
 .carryLoopSquare2                 ; handle the case where one or more carries to the following digits occur
     iny
@@ -282,12 +276,12 @@ square32BitUnsigned
     ldy COUNT_L
     iny                           ; skip sign byte
     lda (ADDR_OPER_LEFT), y       ; load COUNT_L digit of left operand 
-    beq noExtraCarrySquare       ; result will be zero => skip rest of code
+    beq noExtraCarrySquare        ; result will be zero => skip rest of code
     tax                           ; and store it in X register
     ldy COUNT_R                   ; load COUNT_R digit of right operand in accu
     iny                           ; skip sign byte
     lda (ADDR_OPER_LEFT), y
-    beq noExtraCarrySquare       ; result will be zero => skip rest of code
+    beq noExtraCarrySquare        ; result will be zero => skip rest of code
     ;jsr mul16Bit                 ; multiply these 8 bit values. Result MSB in accu, LSB in x register
     +mul16BitBankedRAM
     ; multiply multiplication result by two
@@ -314,7 +308,7 @@ square32BitUnsigned
     sta TEMP_MUL, y
     iny
     tya
-    and #8                        ; "compare" with 8 without influencing the carry
+    and #8                        ; "compare" with 8 without influencing the carry. This works if y < 8 before the iny  
     bne noExtraCarrySquare
     lda HELP_MUL_3
     adc TEMP_MUL, y
@@ -480,13 +474,32 @@ halve32Bit
 
     rts
 
-LEFT_GREATER_EQUAL_RIGHT
-!byte 0
 
 !macro prepareAddSub {
-    lda #0
-    sta LEFT_GREATER_EQUAL_RIGHT
-    jsr cmp32BitUnsigned
+    stz LEFT_GREATER_EQUAL_RIGHT
+    ;jsr cmp32BitUnsigned
+    ldy #4                       ; start at MSB
+    lda (ADDR_OPER_LEFT), y
+    cmp (ADDR_OPER_RIGHT), y
+    beq .next1                   ; continue if equal
+    bra .endCmp                          ; carry contains result                   
+.next1
+    dey
+    lda (ADDR_OPER_LEFT), y
+    cmp (ADDR_OPER_RIGHT), y
+    beq .next2                   ; continue if equal
+    bra .endCmp                          ; carry contains result
+.next2
+    dey
+    lda (ADDR_OPER_LEFT), y
+    cmp (ADDR_OPER_RIGHT), y
+    beq .next3                   ; continue if equal
+    bra .endCmp                          ; carry contains result
+.next3                           ; We get here only if all bytes before were equal
+    dey
+    lda (ADDR_OPER_LEFT), y
+    cmp (ADDR_OPER_RIGHT), y     ; carry contains result even if values are equal
+.endCmp 
     bcc .leftLessThanRight
     inc LEFT_GREATER_EQUAL_RIGHT
 .leftLessThanRight
