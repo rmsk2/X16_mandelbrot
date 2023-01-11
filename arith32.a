@@ -310,7 +310,7 @@ square32BitUnsigned
     tya
     and #8                        ; "compare" with 8 without influencing the carry. This works if y < 8 before the iny  
     bne noExtraCarrySquare
-    lda HELP_MUL_3
+    lda HELP_MUL_3                ; add third byte to intermediate result
     adc TEMP_MUL, y
     sta TEMP_MUL, y
     bcc noExtraCarrySquare
