@@ -249,7 +249,7 @@ calcOneMandelbrotSequence
     ; XN <= XN_SQUARE
     +move32BitInline XN_SQUARE, XN
     ; YN_SQUARE <= -YN_SQUARE
-    +callFuncMono neg32, YN_SQUARE
+    +neg32Inline YN_SQUARE
     ; XN <= YN_SQUARE + XN
     +callFunc add32Bit, YN_SQUARE, XN
     ; XN <= REAL + XN

@@ -599,6 +599,13 @@ neg32
     rts
 
 
+!macro neg32Inline .addr {
+    lda .addr
+    eor #1
+    sta .addr
+}
+
+
 !macro normalize .targetPtr {
     ; copy bytes 3,4,5,6 from TEMP_MUL
     ; to bytes 1,2,3,4 of (.targetPtr)
