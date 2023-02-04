@@ -414,6 +414,15 @@ move32Bit
     rts
 
 
+!macro move32BitInline .src, .target {
+    ldy #4
+.loopMove
+    lda .src,y
+    sta .target,y
+    dey
+    bpl .loopMove
+}
+
 ; --------------------------------------------------
 ; This subroutine expects its operand in the zero page pointer ADDR_OPER_LEFT and
 ; doubles that value by simply performing a left shift.
