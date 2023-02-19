@@ -15,7 +15,7 @@ iterations/sec. The  C64 version takes one hour and 15 minutes to calculate the 
 320x200. Of course the biggest part of the speedup stems from the fact that the 65C02 in the X16 runs at 8MHz where the 
 6510 in a C64 is clocked at 1MHz but the X16 version is also more efficient as it only uses 84% of the clock cycles of 
 the C64 version. The main reason for this increased efficiency is that the Commander X16 version is able to store a 
-precomputed table (of size 128K) for 8 bit by 8 bit multiplication im RAM.
+precomputed table (of size 128K) for 8 bit by 8 bit multiplication in RAM.
 
 ![](/result.png?raw=true "Example picture in hires mode")
 
