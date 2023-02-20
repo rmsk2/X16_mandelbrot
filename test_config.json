@@ -1,0 +1,13 @@
+{
+    "Model": 1,
+    "MemSpec": "XSixteen512K",
+    "IoMask": 45,
+    "IoAddrConfig": {
+    },
+    "PreLoad": {
+    },
+    "AcmeBinary": "acme",
+    "AcmeSrcDir": "./",
+    "AcmeBinDir": "./tests/bin",
+    "AcmeTestDir": "./tests"
+}

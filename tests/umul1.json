@@ -1,0 +1,5 @@
+{
+    "Name": "FFFF * FC89 = FC880377",
+    "TestDriverSource": "umul1.a",
+    "TestScript": "umul1.lua"
+}

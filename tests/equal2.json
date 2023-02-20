@@ -1,0 +1,5 @@
+{
+    "Name": "+0 and -0 are equal",
+    "TestDriverSource": "equal1.a",
+    "TestScript": "equal2.lua"
+}

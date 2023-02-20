@@ -1,0 +1,5 @@
+{
+    "Name": "+1 and -1 differ",
+    "TestDriverSource": "equal1.a",
+    "TestScript": "equal1.lua"
+}

@@ -1,0 +1,20 @@
+!cpu 65C02
+
+* = $0800
+
+jmp start
+
+OPER_L
+!byte 0,0,0,0,0
+
+!source "zeropage.a"
+!zone arith
+!source "arith16.a"
+!source "arith32.a"
+
+!zone main
+
+start
+    jsr initArithmetic
+    +callFuncMono square32BitNormalized, OPER_L
+    brk
