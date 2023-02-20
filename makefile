@@ -23,3 +23,6 @@ mandelbr.prg: main.a arith16.a arith32.a string.a vera.a mandelhelp.a zeropage.a
 
 derive_stepping: derive_stepping.rs
 	rustc derive_stepping.rs
+
+test:
+	6502profiler verifyall -c $(WORKDIR)/test_config.json
