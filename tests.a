@@ -159,72 +159,6 @@ TEXT_CARRY_SET
 
 ; --------------------------------------------------
 
-.TXT_TIME1
-!byte 20
-!tx "05:01:23 > 05:01:22" 
-!byte 13
-
-.TXT_TIME2
-!byte 20
-!tx "05:01:22 < 05:01:23" 
-!byte 13
-
-.TXT_TIME3
-!byte 21
-!tx "05:01:22 == 05:01:22" 
-!byte 13
-
-.TIME1
-!byte 1,0,0
-.TIME2 
-!byte $23, 1, 5
-.TIME3
-!byte $22, 1, 5
-
-; --------------------------------------------------
-
-.TXT_TIME4
-!byte 32
-!tx "05:00:23 - 04:53:24 == 00:06:59" 
-!byte 13
-
-.TIME4
-!byte $24, $53, 4
-.TIME5
-!byte $23, 0, 5
-.TIME6
-!byte $59, $06, 0
-
-; --------------------------------------------------
-
-.TXT_TIME5
-!byte 32
-!tx "05:01:23 - 05:00:22 == 00:01:01" 
-!byte 13
-
-.TIME7
-!byte $22, $00, 5
-.TIME8
-!byte $23, 1, 5
-.TIME9
-!byte $01, $01, 0
-
-; --------------------------------------------------
-
-.TXT_TIME6
-!byte 32
-!tx "24:00:00 - 23:52:12 == 00:07:48" 
-!byte 13
-
-.TIME10
-!byte $12, $52, $23
-.TIME11
-!byte $00, 0, $24
-.TIME12
-!byte $48, $07, 0
-
-; --------------------------------------------------
-
 .TXT_TIME7
 !byte 32
 !tx "02:17:59 + 14:53:02 == 17:11:01" 
@@ -236,20 +170,6 @@ TEXT_CARRY_SET
 !byte $02, $53, $14
 .TIME15
 !byte $01, $11, $17
-
-; --------------------------------------------------
-
-.TXT_TIME8
-!byte 36
-!tx "17:05:32 UNTIL 22:35:02 == 05:29:30" 
-!byte 13
-
-.TIME16
-!byte $32, $05, $17
-.TIME17
-!byte $02, $35, $22
-.TIME18
-!byte $30, $29, $05
 
 ; --------------------------------------------------
 
@@ -312,41 +232,7 @@ testMain
     +getTimeStr .TIME_STR, RTCI2C
     +printStr .TIME_STR
     jsr printCRLF
-    jsr printCRLF
-; --------------------------------------------------     
-    +printStr .TXT_TIME1
-    +cmpTime .TIME2, .TIME3
-    +expectCarrySet
-    +printStr .TXT_TIME2
-    +cmpTime .TIME3, .TIME2
-    +expectCarryClear
-    +printStr .TXT_TIME3
-    +cmpTime .TIME3, .TIME3
-    +expectEqual
-; --------------------------------------------------
-    +printStr .TXT_TIME4
-    +diffTimeSimple .TIME5, .TIME4
-    +getTimeStr .TIME_STR, .TIME4
-    +printStr .TIME_STR
-    jsr printCRLF
-    +cmpTime .TIME4, .TIME6
-    +expectEqual
-; --------------------------------------------------
-    +printStr .TXT_TIME5
-    +diffTimeSimple .TIME8, .TIME7
-    +getTimeStr .TIME_STR, .TIME7
-    +printStr .TIME_STR
-    jsr printCRLF
-    +cmpTime .TIME7, .TIME9
-    +expectEqual    
-; --------------------------------------------------
-    +printStr .TXT_TIME6
-    +diffTimeSimple .TIME11, .TIME10
-    +getTimeStr .TIME_STR, .TIME10
-    +printStr .TIME_STR
-    jsr printCRLF
-    +cmpTime .TIME10, .TIME12
-    +expectEqual
+    jsr printCRLF   
 ; --------------------------------------------------
     +printStr .TXT_TIME7
     +addTimeSimple .TIME13, .TIME14
@@ -354,14 +240,6 @@ testMain
     +printStr .TIME_STR
     jsr printCRLF
     +cmpTime .TIME14, .TIME15
-    +expectEqual
-; --------------------------------------------------
-    +printStr .TXT_TIME8
-    +diffTime .TIME16, .TIME17
-    +getTimeStr .TIME_STR, .TIME17
-    +printStr .TIME_STR
-    jsr printCRLF
-    +cmpTime .TIME18, .TIME17
     +expectEqual
 ; --------------------------------------------------
     +printStr .TXT_TIME9

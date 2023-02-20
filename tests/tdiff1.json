@@ -1,0 +1,5 @@
+{
+    "Name": "05:00:23 - 04:53:24 == 00:06:59",
+    "TestDriverSource": "time_diff.a",
+    "TestScript": "tdiff1.lua"
+}
