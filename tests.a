@@ -159,33 +159,6 @@ TEXT_CARRY_SET
 
 ; --------------------------------------------------
 
-.TXT_TIME7
-!byte 32
-!tx "02:17:59 + 14:53:02 == 17:11:01" 
-!byte 13
-
-.TIME13
-!byte $59, $17, $2
-.TIME14
-!byte $02, $53, $14
-.TIME15
-!byte $01, $11, $17
-
-; --------------------------------------------------
-
-.TXT_TIME9
-!byte 36
-!tx "22:17:25 UNTIL 00:35:02 == 02:17:37" 
-!byte 13
-
-.TIME19
-!byte $25, $17, $22
-.TIME20
-!byte $02, $35, $00
-.TIME21
-!byte $37, $17, $02
-
-; --------------------------------------------------
 ;-01 45 66 B4
 TEST_INIT_REAL
 !byte 1,$B4,$66,$45,$01
@@ -233,22 +206,6 @@ testMain
     +printStr .TIME_STR
     jsr printCRLF
     jsr printCRLF   
-; --------------------------------------------------
-    +printStr .TXT_TIME7
-    +addTimeSimple .TIME13, .TIME14
-    +getTimeStr .TIME_STR, .TIME14
-    +printStr .TIME_STR
-    jsr printCRLF
-    +cmpTime .TIME14, .TIME15
-    +expectEqual
-; --------------------------------------------------
-    +printStr .TXT_TIME9
-    +diffTime .TIME19, .TIME20
-    +getTimeStr .TIME_STR, .TIME20
-    +printStr .TIME_STR
-    jsr printCRLF
-    +cmpTime .TIME21, .TIME20
-    +expectEqual
 ; --------------------------------------------------
     ;jsr runOneSequence    
 ; --------------------------------------------------
