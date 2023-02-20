@@ -137,36 +137,6 @@ TEXT_CARRY_SET
     +printStr TEXT_OK
 }
 
-.MINUS_ONE
-!byte 1,0,0,0,1
-
-.PLUS_ONE
-!byte 0,0,0,0,1
-
-; --------------------------------------------------
-
-; -1
-.TEST_VAL_1
-!byte 1,0,0,0,1
-
-;+1
-.TEST_VAL_2
-!byte 0,0,0,0,1
-
-; --------------------------------------------------
-
-
-.TEXT_GT_1
-!byte 6
-!tx "2 >= 1"
-
-.TEXT_LT_1
-!byte 6
-!tx "1 < 2"
-
-.PLUS_TWO
-!byte 0,0,0,0,2
-
 ; --------------------------------------------------
 
 .TXT_READING_RTC
@@ -337,12 +307,6 @@ runOneSequence
 
 
 testMain
-; --------------------------------------------------    
-    +perfTestCompare cmp32BitUnsigned, .PLUS_TWO, .PLUS_ONE, .TEXT_GT_1
-    +expectCarrySet
-; --------------------------------------------------    
-    +perfTestCompare cmp32BitUnsigned, .PLUS_ONE, .PLUS_TWO, .TEXT_LT_1
-    +expectCarryClear
 ; -------------------------------------------------- 
     +printStr .TXT_READING_RTC_I2C 
     +getTimeStr .TIME_STR, RTCI2C

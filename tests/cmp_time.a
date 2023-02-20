@@ -1,0 +1,26 @@
+!cpu 65C02
+
+* = $0800
+
+jmp start
+
+T1
+!byte 0,0,0
+T2
+!byte 0,0,0
+
+
+!source "zeropage.a"
+
+!zone arith
+!source "arith16.a"
+
+!zone string
+!source "string.a"
+
+!zone main
+!source "rtc.a"
+
+start
+    +cmpTime T1,T2
+    brk

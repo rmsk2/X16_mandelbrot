@@ -1,0 +1,5 @@
+{
+    "Name": "05:01:23 \u003e 05:01:22",
+    "TestDriverSource": "cmp_time.a",
+    "TestScript": "time1.lua"
+}
