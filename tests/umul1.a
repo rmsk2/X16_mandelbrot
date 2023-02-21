@@ -17,6 +17,6 @@ OPER_R
 !zone main
 
 start
-    jsr initArithmetic
+    ;jsr initArithmetic
     +callFunc mul32BitUnsignedInt, OPER_L, OPER_R
     brk

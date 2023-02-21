@@ -17,6 +17,5 @@ OPER_R
 !zone main
 
 start
-    ;jsr initArithmetic
-    +callFunc mul32BitNormalized, OPER_L, OPER_R
+    jsr initArithmetic
     brk

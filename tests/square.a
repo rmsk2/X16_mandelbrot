@@ -15,6 +15,6 @@ OPER_L
 !zone main
 
 start
-    jsr initArithmetic
+    ;jsr initArithmetic
     +callFuncMono square32BitNormalized, OPER_L
     brk

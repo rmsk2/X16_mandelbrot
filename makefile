@@ -26,4 +26,4 @@ derive_stepping: derive_stepping.rs
 	rustc derive_stepping.rs
 
 test:
-	6502profiler verifyall -c $(WORKDIR)/test_config.json
+	6502profiler verifyall -c $(WORKDIR)/test_config.json -prexec make_mul_table.a
