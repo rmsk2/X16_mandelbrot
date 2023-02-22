@@ -30,6 +30,13 @@ Under MacOS you have to set the variable `MAC` (use `make MAC=1`) when calling t
 the variables `ACME` and `WORKDIR` to reflect the situation on your machine. Under Linux the makefile should run 
 without changes as long as ACME is in your `PATH`.
 
+# Running tests
+
+The source code includes tests for some parts of the software. These tests make use of my `6502profiler` project, which
+can be found [here](https://github.com/rmsk2/6502profiler). If `6502profiler` is in your `PATH` you can execute these tests
+by running `make test`. The test specific source code can be found in the `tests` directory and consists of a mixture of
+assembly and Lua, where the Lua scripts arrange test data and verify the expected results.
+
 # About my motivation for writing this program
 
 Why does someone write a program (in machine language) for an 8-bit microprocessor that is nowadys only 
