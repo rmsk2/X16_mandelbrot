@@ -1,7 +1,7 @@
 # General Information
 
 This program is a further optimzed version of my [Mandelbrot set viewer for the C64](https://github.com/rmsk2/c64_mandelbrot) that
-is intended for [Commander X16](https://www.commanderx16.com) (see also here on 
+is intended for [Commander X16](https://cx16forum.com/) (see also here on 
 [GitHub](https://github.com/X16Community/x16-emulator)) and makes use of commander X16 features like:
 
 - More RAM which offers the possibility to precompute more stuff
