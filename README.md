@@ -21,14 +21,17 @@ precomputed table (of size 128K) for 8 bit by 8 bit multiplication in RAM.
 
 You have to start the Commander X16 emulator with at least the following options: `-sdcard sdcard.img -rtc` for
 all features to work. `LOAD` the program from SD card and type `RUN` to start it. Alternatively you can utilize 
-the `-prg` option to load the program even if it is not stored on the SD-card  image.
+the `-prg` option to load the program even if it is not stored on the SD-card  image. If you have a german keyboard
+you also may want to add `-keymap de`. I use `./x16emu -sdcard sdcard.img -prg mandelbr.prg -keymap de -rtc` to start
+the emulator.
 
 # Building the software
 
 You need the ACME macro assembler to assemble the program. A makefile is provided to simplify building the software.
 Under MacOS you have to set the variable `MAC` (use `make MAC=1`) when calling the makefile and you have to adapt 
 the variables `ACME` and `WORKDIR` to reflect the situation on your machine. Under Linux the makefile should run 
-without changes as long as ACME is in your `PATH`.
+without changes as long as ACME is in your `PATH`. I have tested that the software runs in the latest version of
+the X16 emulator (as of today: Release 46 ("Winnipeg")).
 
 # Running tests
 
@@ -42,15 +45,13 @@ assembly and Lua, where the Lua scripts arrange test data and verify the expecte
 Why does someone write a program (in machine language) for an 8-bit microprocessor that is nowadys only 
 used in small embedded systems, that offers functionality which is on several levels (performance, 
 visual appeal, ...) orders of magnitude worse than software written for the same purpose for modern 
-systems? And on top of that the computer that the program is designed to run on does only exist to
-a certain extent as only a few prototypes have been built yet.
+systems? 
 
 The only reasons I can give are: I had fun doing it and it was nostalgic as it transported me back to
 the days when another 6502 system was the center of at least my (home) computing universe. The commander
-X16 (or to be more precise at the moment its emulator) strikes the right balance between new possibilities 
-and a nostalgic familiarity with the Commodore family of home computers that allows all the people
-that grew up with these computers to now write the programs that they did not or could not write in
-the 80ies or 90ies.
+X16 strikes the right balance between new possibilities and a nostalgic familiarity with the Commodore 
+family of home computers that allows all the people that grew up with these computers to now write the 
+programs that they did not or could not write in the 80ies or 90ies.
 
 # Using the program
 
@@ -109,7 +110,7 @@ would become zero as the last nonzero bit would have been shifted out of the 24 
 
 - Loading and saving pictures only works with a mounted SD-card image. I am at the moment not sure if there is anything
 I can do about that.
-- As I do not have access to real hardware and therefore have to use the X16 emulator it is not 100% sure that the program
+- As I do not have access to real hardware (yet) and therefore have to use the X16 emulator it is not 100% sure that the program
 performs in the same way on a real machine
 - I have not yet tested whether my fixed point math routines are actually faster than the floating point routines
 in the X16s math library and if they are really faster I don't know by how much.
