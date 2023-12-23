@@ -19,11 +19,11 @@ precomputed table (of size 128K) for 8 bit by 8 bit multiplication in RAM.
 
 ![](/result.png?raw=true "Example picture in hires mode")
 
-You have to start the Commander X16 emulator with at least the following options: `-sdcard sdcard.img -rtc` for
-all features to work. `LOAD` the program from SD card and type `RUN` to start it. Alternatively you can utilize 
-the `-prg` option to load the program even if it is not stored on the SD-card  image. If you have a german keyboard
-you also may want to add `-keymap de`. I use `./x16emu -sdcard sdcard.img -prg mandelbr.prg -keymap de -rtc` to start
-the emulator.
+You can download a prebuilt version of the software in the release section. In order to run it you have to start the Commander 
+X16 emulator with at least the following options: `-sdcard sdcard.img -rtc` for all features to work. Utilize the `-prg` option 
+to load the program even if it is not stored on the SD-card image or `LOAD` the program from SD card. Type `RUN` to start it. 
+If you have a german keyboard you also may want to add `-keymap de`. I use 
+`./x16emu -sdcard sdcard.img -prg mandelbr.prg -keymap de -rtc` to start the emulator.
 
 # Building the software
 
