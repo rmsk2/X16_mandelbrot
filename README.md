@@ -108,10 +108,8 @@ would become zero as the last nonzero bit would have been shifted out of the 24 
 
 # Limitations at the moment
 
-- Loading and saving pictures only works with a mounted SD-card image. I am at the moment not sure if there is anything
+- In the emulator loading and saving pictures only works with a mounted SD-card image. I am at the moment not sure if there is anything
 I can do about that.
-- As I do not have access to real hardware (yet) and therefore have to use the X16 emulator it is not 100% sure that the program
-performs in the same way on a real machine
 - I have not yet tested whether my fixed point math routines are actually faster than the floating point routines
 in the X16s math library and if they are really faster I don't know by how much.
 - Currently the 32 bit multiplication uses the text book algorithm taught at school for manual multiplication. I could test
